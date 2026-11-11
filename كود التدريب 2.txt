@@ -1,0 +1,621 @@
+# ============================================================
+# AraT5 Hierarchical Classifier — Single Cell (Fully Fixed)
+# ============================================================
+
+# ---------- 0. Install ----------
+!pip -q install -U transformers datasets sentencepiece accelerate evaluate scikit-learn peft
+!pip -q install -U torchao
+
+
+# ---------- 1. Imports ----------
+import os, re, json, html, gc, random, shutil
+import numpy as np
+import pandas as pd
+import torch
+import matplotlib.pyplot as plt
+from bs4 import BeautifulSoup
+from collections import Counter
+from google.colab import drive
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+
+
+# ---------- 2. Reproducibility ----------
+RANDOM_STATE = 1234
+random.seed(RANDOM_STATE)
+np.random.seed(RANDOM_STATE)
+torch.manual_seed(RANDOM_STATE)
+torch.cuda.manual_seed_all(RANDOM_STATE)
+
+
+# ---------- 3. Mount Drive ----------
+drive.mount('/content/drive')
+
+
+# ---------- 4. Paths & Hyperparameters ----------
+DATA_ROOT      = "/content/drive/MyDrive/model_dataset"
+RUN_ROOT       = "/content/drive/MyDrive/arat5_run_v3"
+
+FULL_SOURCE_F  = os.path.join(DATA_ROOT, "final_filtered_data.json")
+
+RAW_TRAIN_F    = os.path.join(DATA_ROOT, "train.json")
+RAW_VALID_F    = os.path.join(DATA_ROOT, "validation.json")
+RAW_TEST_F     = os.path.join(DATA_ROOT, "test.json")
+
+S2S_TRAIN_F    = os.path.join(DATA_ROOT, "train_t5_clean.jsonl")
+S2S_VALID_F    = os.path.join(DATA_ROOT, "validation_t5_clean.jsonl")
+S2S_TEST_F     = os.path.join(DATA_ROOT, "test_t5_clean.jsonl")
+
+TOKEN_CACHE    = os.path.join(DATA_ROOT, "tokenized_cache")
+
+BASE_MODEL_ID  = "UBC-NLP/AraT5-base"
+FINAL_ARTIFACT = os.path.join(RUN_ROOT, "final_artifact")
+
+FINETUNE_MODE   = "full"          # lora | freeze_encoder | full
+ADAPTER_RANK    = 16
+ADAPTER_SCALE   = 32
+ADAPTER_DROPOUT = 0.05
+
+EPOCH_COUNT     = 4
+LR              = 3e-5 if FINETUNE_MODE != "lora" else 2e-5
+TRAIN_BS        = 4  if FINETUNE_MODE != "lora" else 8
+EVAL_BS         = 32 if FINETUNE_MODE != "lora" else 4
+GRAD_ACCUM      = 8  if FINETUNE_MODE != "lora" else 2
+LR_WARMUP       = 500 if FINETUNE_MODE != "lora" else 200
+
+SRC_MAX_LEN     = 512
+TGT_MAX_LEN     = 16
+DATA_FRACTION   = 1.0
+AUTO_RESUME     = True
+
+os.makedirs(RUN_ROOT, exist_ok=True)
+
+print("=" * 60)
+print(f"Mode            : {FINETUNE_MODE}")
+print(f"Effective batch : {TRAIN_BS * GRAD_ACCUM}")
+print(f"Learning rate   : {LR}")
+print(f"Output dir      : {RUN_ROOT}")
+print(f"Full source     : {FULL_SOURCE_F}")
+print("=" * 60)
+
+
+# ---------- 5. Environment Check ----------
+print("=" * 60)
+print(f"PyTorch : {torch.__version__}")
+print(f"CUDA    : {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    _dev = torch.cuda.get_device_properties(0)
+    _cap = torch.cuda.get_device_capability(0)
+    print(f"GPU     : {_dev.name}")
+    print(f"VRAM    : {_dev.total_memory / 1e9:.1f} GB")
+    print(f"Cap.    : {_cap[0]}.{_cap[1]}")
+print("=" * 60)
+
+
+# ============================================================
+# 6. فحص وجود الملفات (قبل أي عمل)
+# ============================================================
+print("\n📁 فحص الملفات:")
+print(f"  final_filtered_data.json : {os.path.exists(FULL_SOURCE_F)}")
+print(f"  train_t5_clean.jsonl     : {os.path.exists(S2S_TRAIN_F)}")
+print(f"  validation_t5_clean.jsonl: {os.path.exists(S2S_VALID_F)}")
+print(f"  test_t5_clean.jsonl      : {os.path.exists(S2S_TEST_F)}")
+
+seq2seq_ready = all(os.path.exists(p) for p in (S2S_TRAIN_F, S2S_VALID_F, S2S_TEST_F))
+
+if seq2seq_ready:
+    print("\n✅ ملفات seq2seq الجاهزة موجودة — سنستخدمها مباشرة.")
+    for p in (S2S_TRAIN_F, S2S_VALID_F, S2S_TEST_F):
+        n = sum(1 for _ in open(p, "r", encoding="utf-8"))
+        print(f"   {os.path.basename(p)}: {n:,} سطر")
+    SKIP_PREP = True
+else:
+    print("\n⚠️ ملفات seq2seq الجاهزة غير موجودة.")
+    if not os.path.exists(FULL_SOURCE_F):
+        raise FileNotFoundError(
+            f"❌ لا يوجد أي مصدر بيانات!\n"
+            f"   ارفع final_filtered_data.json إلى: {DATA_ROOT}\n"
+            f"   أو ارفع ملفات seq2seq الجاهزة."
+        )
+    print("   سنُنشئها من المصدر الكامل.")
+    SKIP_PREP = False
+
+
+# ============================================================
+# 7. المعالجة الكاملة (تُنفّذ فقط إذا SKIP_PREP = False)
+# ============================================================
+if not SKIP_PREP:
+
+    _AD_PATTERNS = [
+        r"اضغط\s+هنا(?:\s+\S+){0,5}",
+        r"انقر\s+هنا(?:\s+\S+){0,5}",
+        r"اضغط\s+هنا\s+لزيارة",
+        r"انقر\s+هنا\s+لزيارة",
+        r"اضغط\s+هنا\s+للتسجيل",
+        r"انقر\s+هنا\s+للتسجيل",
+    ]
+    _INVISIBLE = ["\u200b", "\u200c", "\u200d", "\ufeff"]
+
+    def normalize_article_text(raw):
+        if not isinstance(raw, str):
+            return ""
+        raw = html.unescape(raw)
+        if re.search(r"<[a-zA-Z][^>]*>", raw):
+            raw = BeautifulSoup(raw, "html.parser").get_text(" ", strip=True)
+        for ch in _INVISIBLE:
+            raw = raw.replace(ch, "")
+        raw = re.sub(r"[\t\r\n]+", " ", raw)
+        raw = re.sub(r"\s+", " ", raw)
+        for pat in _AD_PATTERNS:
+            raw = re.sub(pat, " ", raw, flags=re.IGNORECASE)
+        raw = re.sub(r"https?://\S+|www\.\S+", " ", raw, flags=re.IGNORECASE)
+        raw = re.sub(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", " ", raw)
+        return re.sub(r"\s+", " ", raw).strip()
+
+    def has_balanced_brackets(text):
+        pairs = {"(": ")", "[": "]", "{": "}"}
+        stack = []
+        for ch in text:
+            if ch in pairs:
+                stack.append(ch)
+            elif ch in pairs.values():
+                if not stack or pairs[stack.pop()] != ch:
+                    return False
+        return not stack
+
+    print(f"\n📖 قراءة المصدر الكامل: {FULL_SOURCE_F}")
+    raw_articles = pd.read_json(FULL_SOURCE_F)
+    print(f"   عدد السجلات الخام: {len(raw_articles):,}")
+
+    records = raw_articles.to_dict(orient="records")
+
+    cleaned_records = []
+    for item in records:
+        new_item = {
+            "title"       : normalize_article_text(item.get("title", "")),
+            "content"     : normalize_article_text(item.get("content", "")),
+            "category"    : normalize_article_text(item.get("category", "")),
+            "subcategory" : normalize_article_text(item.get("subcategory", "")),
+        }
+        new_item["word_count"] = len(new_item["content"].split())
+        cleaned_records.append(new_item)
+
+    print(f"✅ بعد التنظيف: {len(cleaned_records):,}")
+
+    articles_table = pd.DataFrame(cleaned_records)
+    articles_table["label_key"] = (
+        articles_table["category"].astype(str)
+        + "|||"
+        + articles_table["subcategory"].astype(str)
+    )
+
+    train_split, holdout_split = train_test_split(
+        articles_table,
+        test_size=0.20,
+        random_state=RANDOM_STATE,
+        stratify=articles_table["label_key"],
+    )
+    val_split, test_split = train_test_split(
+        holdout_split,
+        test_size=0.50,
+        random_state=RANDOM_STATE,
+        stratify=holdout_split["label_key"],
+    )
+    for s in (train_split, val_split, test_split):
+        s.drop(columns=["label_key"], inplace=True)
+
+    print(f"\n📊 التقسيم:")
+    print(f"   Train : {len(train_split):,}")
+    print(f"   Val   : {len(val_split):,}")
+    print(f"   Test  : {len(test_split):,}")
+    print(f"   Total : {len(train_split)+len(val_split)+len(test_split):,}")
+
+    train_split.to_json(RAW_TRAIN_F, orient="records", indent=4, force_ascii=False)
+    val_split.to_json(RAW_VALID_F,   orient="records", indent=4, force_ascii=False)
+    test_split.to_json(RAW_TEST_F,   orient="records", indent=4, force_ascii=False)
+
+    def compose_encoder_input(row):
+        return (
+            "المهمة: تصنيف هرمي\n\n"
+            f"العنوان:\n{row['title']}\n\n"
+            f"النص:\n{row['content']}"
+        )
+
+    def compose_decoder_target(row):
+        return f"<main_class>{row['category']} <sub_class>{row['subcategory']}"
+
+    def export_seq2seq_jsonl(rows_df, dst_path):
+        rows = rows_df.to_dict(orient="records")
+        with open(dst_path, "w", encoding="utf-8") as out:
+            for row in rows:
+                rec = {
+                    "input"  : compose_encoder_input(row),
+                    "target" : compose_decoder_target(row),
+                }
+                out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        return len(rows)
+
+    n1 = export_seq2seq_jsonl(train_split, S2S_TRAIN_F)
+    n2 = export_seq2seq_jsonl(val_split,   S2S_VALID_F)
+    n3 = export_seq2seq_jsonl(test_split,  S2S_TEST_F)
+
+    print(f"\n✅ تم إنشاء ملفات seq2seq: train={n1}, val={n2}, test={n3}")
+else:
+    print("\n⏭️ تخطّي مرحلة المعالجة — سنستخدم الملفات الجاهزة.")
+
+
+# ============================================================
+# 8. تحميل الداتاسيت
+# ============================================================
+from datasets import load_dataset, load_from_disk
+
+corpus = load_dataset(
+    "json",
+    data_files={
+        "train"      : S2S_TRAIN_F,
+        "validation" : S2S_VALID_F,
+        "test"       : S2S_TEST_F,
+    },
+)
+print("\n📊 Dataset:")
+for name, split in corpus.items():
+    print(f"  {name:12s}: {len(split):>8,}")
+
+
+# ============================================================
+# 9. Tokenizer
+# ============================================================
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
+from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer, EarlyStoppingCallback
+
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID)
+added = tokenizer.add_special_tokens(
+    {"additional_special_tokens": ["<main_class>", "<sub_class>"]}
+)
+print(f"\nAdded tokens: {added}, vocab: {len(tokenizer):,}")
+
+os.makedirs(os.path.join(RUN_ROOT, "tokenizer"), exist_ok=True)
+tokenizer.save_pretrained(os.path.join(RUN_ROOT, "tokenizer"))
+
+
+# ============================================================
+# 10. Tokenization (مع كاش)
+# ============================================================
+def tokenize_examples(batch):
+    enc = tokenizer(batch["input"], max_length=SRC_MAX_LEN, truncation=True)
+    tgt = tokenizer(text_target=batch["target"],
+                    max_length=TGT_MAX_LEN, truncation=True)
+    enc["labels"] = [
+        t if t != tokenizer.pad_token_id else -100
+        for t in tgt["input_ids"]
+    ]
+    return enc
+
+if os.path.exists(TOKEN_CACHE) and DATA_FRACTION == 1.0:
+    tokenized_corpus = load_from_disk(TOKEN_CACHE)
+    print("\nLoaded tokenized cache.")
+else:
+    tokenized_corpus = corpus.map(
+        tokenize_examples,
+        batched=True,
+        remove_columns=["input", "target"],
+        desc="Tokenizing",
+    )
+    if DATA_FRACTION == 1.0:
+        tokenized_corpus.save_to_disk(TOKEN_CACHE)
+        print("\nCache written.")
+
+print(tokenized_corpus)
+
+
+# ============================================================
+# 11. Model & Strategy  (مع إصلاح gradient checkpointing)
+# ============================================================
+gc.collect(); torch.cuda.empty_cache()
+
+model = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL_ID)
+model.resize_token_embeddings(len(tokenizer))
+
+if FINETUNE_MODE == "lora":
+    from peft import LoraConfig, TaskType, get_peft_model
+    cfg = LoraConfig(
+        r=ADAPTER_RANK,
+        lora_alpha=ADAPTER_SCALE,
+        lora_dropout=ADAPTER_DROPOUT,
+        bias="none",
+        task_type=TaskType.SEQ_2_SEQ_LM,
+        target_modules=["q", "v"],
+    )
+    model = get_peft_model(model, cfg)
+    model.print_trainable_parameters()
+    mode_label = "LoRA"
+elif FINETUNE_MODE == "freeze_encoder":
+    for p in model.encoder.parameters():
+        p.requires_grad = False
+    for p in model.shared.parameters():
+        p.requires_grad = True
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()          # ✅ إصلاح
+    mode_label = "Frozen Encoder"
+else:
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()          # ✅ إصلاح
+    mode_label = "Full Fine-tune"
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+total_p     = sum(p.numel() for p in model.parameters())
+trainable_p = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f"\nMode      : {mode_label}")
+print(f"Total     : {total_p/1e6:.1f}M")
+print(f"Trainable : {trainable_p/1e6:.1f}M ({trainable_p/total_p*100:.1f}%)")
+
+data_collator = DataCollatorForSeq2Seq(
+    tokenizer=tokenizer, model=model, padding=True,
+)
+
+
+# ============================================================
+# 12. Metrics
+# ============================================================
+_MAIN_RE = re.compile(r"<main_class>\s*(.*?)\s*<sub_class>", re.DOTALL)
+_SUB_RE  = re.compile(r"<sub_class>\s*(.*?)(?:</s>|$)",      re.DOTALL)
+
+def parse_label_tokens(text):
+    text = text.replace("<pad>", "").strip()
+    m = _MAIN_RE.search(text)
+    s = _SUB_RE.search(text)
+    return (m.group(1).strip() if m else "",
+            s.group(1).strip() if s else "")
+
+def seq2seq_metrics(eval_pred):
+    preds, labels = eval_pred
+    if isinstance(preds, tuple):
+        preds = preds[0]
+    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=False)
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=False)
+    total = len(decoded_labels)
+    main_ok = sub_ok = exact_ok = 0
+    for p, t in zip(decoded_preds, decoded_labels):
+        pm, ps = parse_label_tokens(p)
+        tm, ts = parse_label_tokens(t)
+        if pm == tm: main_ok += 1
+        if ps == ts: sub_ok  += 1
+        if pm == tm and ps == ts: exact_ok += 1
+    return {
+        "main_acc": round(main_ok/total, 4),
+        "sub_acc" : round(sub_ok/total, 4),
+        "exact"   : round(exact_ok/total, 4),
+    }
+
+
+# ============================================================
+# 13. Training Arguments (نسخة آمنة لكل إصدارات transformers)
+# ============================================================
+use_fp16 = use_bf16 = False
+prec_label = "fp32"
+if torch.cuda.is_available():
+    _cap = torch.cuda.get_device_capability(0)
+    if _cap[0] >= 8:
+        use_bf16 = True
+        prec_label = "bf16"
+print(f"\nPrecision: {prec_label}")
+
+EVAL_EVERY = 1000
+
+_common_args = dict(
+    output_dir=RUN_ROOT,
+    num_train_epochs=EPOCH_COUNT,
+    learning_rate=LR,
+    lr_scheduler_type="cosine",
+    warmup_steps=LR_WARMUP,
+    weight_decay=0.01,
+    max_grad_norm=1.0,
+    optim="adamw_torch",
+    per_device_train_batch_size=TRAIN_BS,
+    per_device_eval_batch_size=EVAL_BS,
+    gradient_accumulation_steps=GRAD_ACCUM,
+    fp16=use_fp16,
+    bf16=use_bf16,
+    save_strategy="steps",
+    save_steps=EVAL_EVERY,
+    save_total_limit=3,
+    load_best_model_at_end=True,
+    metric_for_best_model="eval_loss",
+    greater_is_better=False,
+    predict_with_generate=True,
+    generation_max_length=TGT_MAX_LEN,
+    generation_num_beams=1,
+    eval_accumulation_steps=10,
+    logging_strategy="steps",
+    logging_steps=100,
+    report_to="none",
+    seed=RANDOM_STATE,
+)
+
+try:
+    training_args = Seq2SeqTrainingArguments(
+        eval_strategy="steps", eval_steps=EVAL_EVERY, **_common_args,
+    )
+    print("Using eval_strategy (new API).")
+except TypeError:
+    training_args = Seq2SeqTrainingArguments(
+        evaluation_strategy="steps", eval_steps=EVAL_EVERY, **_common_args,
+    )
+    print("Using evaluation_strategy (legacy API).")
+
+
+# ============================================================
+# 14. Trainer (نسخة آمنة)
+# ============================================================
+model.tie_weights()
+
+_trainer_kwargs = dict(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_corpus["train"],
+    eval_dataset=tokenized_corpus["validation"],
+    data_collator=data_collator,
+    compute_metrics=seq2seq_metrics,
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+)
+
+try:
+    trainer = Seq2SeqTrainer(processing_class=tokenizer, **_trainer_kwargs)
+    print("Trainer ready (processing_class).")
+except TypeError:
+    trainer = Seq2SeqTrainer(tokenizer=tokenizer, **_trainer_kwargs)
+    print("Trainer ready (tokenizer).")
+
+
+# ============================================================
+# 15. Forward-Pass Smoke Test (قبل التدريب)
+# ============================================================
+print("\n🔬 اختبار forward pass...")
+_smoke_batch = data_collator([
+    tokenized_corpus["train"][0],
+    tokenized_corpus["train"][1],
+])
+with torch.no_grad():
+    _smoke_out = model(
+        input_ids=_smoke_batch["input_ids"].to(device),
+        attention_mask=_smoke_batch["attention_mask"].to(device),
+        labels=_smoke_batch["labels"].to(device),
+    )
+print(f"✅ Forward OK — initial loss = {_smoke_out.loss.item():.4f}")
+del _smoke_batch, _smoke_out
+torch.cuda.empty_cache() if torch.cuda.is_available() else None
+
+
+# ============================================================
+# 16. Train (مع auto-resume)
+# ============================================================
+resume_ckpt = None
+if AUTO_RESUME and os.path.exists(RUN_ROOT):
+    ckpts = sorted(
+        [d for d in os.listdir(RUN_ROOT)
+         if d.startswith("checkpoint-") and os.path.isdir(os.path.join(RUN_ROOT, d))],
+        key=lambda x: int(x.split("-")[1]),
+    )
+    if ckpts:
+        resume_ckpt = os.path.join(RUN_ROOT, ckpts[-1])
+        print(f"\n🔄 Resuming from {ckpts[-1]}")
+
+print("\n" + "=" * 60)
+print("🏋️ TRAINING STARTED")
+print("=" * 60)
+
+train_result = trainer.train(resume_from_checkpoint=resume_ckpt)
+
+print("\n" + "=" * 60)
+print("✅ TRAINING COMPLETE")
+print("=" * 60)
+print(f"Steps     : {train_result.global_step}")
+print(f"Loss      : {train_result.training_loss:.4f}")
+if torch.cuda.is_available():
+    print(f"Peak VRAM : {torch.cuda.max_memory_allocated()/1e9:.2f} GB")
+
+
+# ============================================================
+# 17. Test Evaluation
+# ============================================================
+print("\n⏳ Evaluating on test set...")
+pred_out = trainer.predict(tokenized_corpus["test"])
+preds = pred_out.predictions
+if isinstance(preds, tuple):
+    preds = preds[0]
+
+decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=False)
+lbls = np.where(pred_out.label_ids != -100,
+                pred_out.label_ids,
+                tokenizer.pad_token_id)
+decoded_lbls = tokenizer.batch_decode(lbls, skip_special_tokens=False)
+
+true_main, pred_main, true_sub, pred_sub = [], [], [], []
+for p, t in zip(decoded_preds, decoded_lbls):
+    pm, ps = parse_label_tokens(p)
+    tm, ts = parse_label_tokens(t)
+    pred_main.append(pm); true_main.append(tm)
+    pred_sub.append(ps);  true_sub.append(ts)
+
+print("\n" + "=" * 60)
+print("  📊 MAIN CATEGORY REPORT")
+print("=" * 60)
+print(classification_report(true_main, pred_main, zero_division=0))
+
+print("\n" + "=" * 60)
+print("  📊 SUBCATEGORY REPORT (top 30)")
+print("=" * 60)
+top_subs = [s for s, _ in Counter(true_sub).most_common(30)]
+ft = [t for t in true_sub if t in top_subs]
+fp = [p for t, p in zip(true_sub, pred_sub) if t in top_subs]
+print(classification_report(ft, fp, zero_division=0))
+
+n = len(true_main)
+main_acc = sum(1 for a,b in zip(true_main,pred_main) if a==b)/n
+sub_acc  = sum(1 for a,b in zip(true_sub,pred_sub)   if a==b)/n
+exact    = sum(1 for a,b,c,d in zip(true_main,pred_main,true_sub,pred_sub)
+               if a==b and c==d)/n
+
+print("\n" + "=" * 45)
+print(f"  Main Accuracy : {main_acc:.4f}")
+print(f"  Sub Accuracy  : {sub_acc:.4f}")
+print(f"  Exact Match   : {exact:.4f}")
+print(f"  Total Samples : {n:,}")
+print("=" * 45)
+
+
+# ============================================================
+# 18. Inference Helpers
+# ============================================================
+def predict_article(title, content, num_beams=4):
+    prompt = ("المهمة: تصنيف هرمي\n\n"
+              f"العنوان:\n{title}\n\n"
+              f"النص:\n{content}")
+    enc = tokenizer(prompt, max_length=SRC_MAX_LEN,
+                    truncation=True, return_tensors="pt").to(model.device)
+    with torch.no_grad():
+        out = model.generate(**enc, max_length=TGT_MAX_LEN,
+                             num_beams=num_beams, early_stopping=True)
+    raw = tokenizer.decode(out[0], skip_special_tokens=False)
+    m, s = parse_label_tokens(raw)
+    return {"main": m, "sub": s, "raw": raw}
+
+
+def predict_batch(items, batch_size=8):
+    results = []
+    for i in range(0, len(items), batch_size):
+        chunk = items[i:i + batch_size]
+        prompts = [
+            "المهمة: تصنيف هرمي\n\n"
+            f"العنوان:\n{c['title']}\n\n"
+            f"النص:\n{c['content']}"
+            for c in chunk
+        ]
+        enc = tokenizer(prompts, max_length=SRC_MAX_LEN,
+                        truncation=True, padding=True,
+                        return_tensors="pt").to(model.device)
+        with torch.no_grad():
+            out = model.generate(**enc, max_length=TGT_MAX_LEN, num_beams=1)
+        for text in tokenizer.batch_decode(out, skip_special_tokens=False):
+            m, s = parse_label_tokens(text)
+            results.append({"main": m, "sub": s})
+    return results
+
+
+# ============================================================
+# 19. Save Final Model
+# ============================================================
+os.makedirs(FINAL_ARTIFACT, exist_ok=True)
+trainer.save_model(FINAL_ARTIFACT)
+tokenizer.save_pretrained(FINAL_ARTIFACT)
+
+print(f"\n💾 Saved to {FINAL_ARTIFACT}")
+for f in sorted(os.listdir(FINAL_ARTIFACT)):
+    p = os.path.join(FINAL_ARTIFACT, f)
+    if os.path.isfile(p):
+        print(f"  {f}  ({os.path.getsize(p)/1e6:.1f} MB)")
+
+print("\n✅ All done.")

@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>نظام كشط بيانات موقع سرايا نيوز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #0d47a1;
+    --primary-dark: #002171;
+    --accent: #ff6f00;
+    --accent2: #00bcd4;
+    --success: #2e7d32;
+    --danger: #c62828;
+    --purple: #6a1b9a;
+    --bg-light: #f5f7fa;
+    --text: #1a1a1a;
+    --muted: #5a6473;
+    --border: #e0e6ed;
+    --grad1: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+    --grad2: linear-gradient(135deg, #ff6f00 0%, #f57c00 100%);
+    --grad3: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    --grad4: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+  }
+
+  body {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    background: #2c3038;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 30px 10px;
+  }
+
+  .slide {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 700px;
+    margin: 0 auto 40px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    overflow: hidden;
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide.title-slide {
+    background: var(--grad1);
+    color: white;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 60px;
+    position: relative;
+  }
+
+  .slide.title-slide::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(255,111,0,0.3), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .slide.title-slide::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,188,212,0.25), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .title-slide .content { position: relative; z-index: 2; width: 100%; }
+
+  .uni-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 30px;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    margin-bottom: 40px;
+    font-size: 15px;
+    text-align: right;
+  }
+
+  .uni-header div { flex: 1; }
+  .uni-header div:last-child { text-align: left; }
+
+  .uni-header strong {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 3px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 22px;
+    border-radius: 50px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+  }
+
+  .title-slide h1 {
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 1.3;
+    margin-bottom: 18px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .title-slide h2 {
+    font-size: 22px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-bottom: 30px;
+  }
+
+  .student-info {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 22px 30px;
+    border-radius: 14px;
+    margin-top: 30px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+    text-align: right;
+    min-width: 500px;
+  }
+
+  .student-info .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.2);
+    font-size: 16px;
+  }
+
+  .student-info .row:last-child { border-bottom: none; }
+
+  .student-info .label {
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  .student-info .value {
+    font-weight: 800;
+    font-size: 17px;
+  }
+
+  .slide-header {
+    background: var(--grad1);
+    color: white;
+    padding: 28px 50px;
+    position: relative;
+  }
+
+  .slide-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 120px; height: 5px;
+    background: var(--grad2);
+    border-radius: 5px 0 0 0;
+  }
+
+  .slide-header h2 {
+    font-size: 32px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .slide-header .num {
+    background: var(--accent);
+    width: 45px; height: 45px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  .slide-body {
+    padding: 40px 50px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  h3 {
+    color: var(--primary);
+    font-size: 23px;
+    margin: 25px 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--accent);
+    display: inline-block;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  p { margin-bottom: 15px; font-size: 17px; }
+
+  ul, ol { padding-right: 25px; margin-bottom: 18px; }
+
+  li {
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+
+  li::marker { color: var(--accent); font-weight: 700; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 20px 0;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: var(--bg-light);
+    border-radius: 12px;
+    padding: 22px;
+    border-right: 5px solid var(--accent);
+  }
+
+  .card.blue { border-right-color: var(--primary); }
+  .card.cyan { border-right-color: var(--accent2); }
+  .card.green { border-right-color: var(--success); }
+  .card.red { border-right-color: var(--danger); }
+  .card.purple { border-right-color: var(--purple); }
+
+  .card h4 {
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 10px;
+    font-weight: 800;
+  }
+
+  .card p, .card li {
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .card ul { margin: 0; padding-right: 20px; }
+
+  pre {
+    background: #1e222a;
+    color: #e6edf3;
+    padding: 20px 22px;
+    border-radius: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    direction: ltr;
+    text-align: left;
+    overflow-x: auto;
+    margin: 15px 0;
+    border-right: 4px solid var(--accent2);
+  }
+
+  code {
+    background: #eef2f7;
+    color: #c62828;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  .info-box {
+    padding: 18px 22px;
+    border-radius: 10px;
+    margin: 18px 0;
+    font-size: 16px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .info-box .icon {
+    font-size: 26px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .info-box.tip { background: #e8f5e9; border-right: 5px solid var(--success); }
+  .info-box.warn { background: #fff3e0; border-right: 5px solid var(--accent); }
+  .info-box.err  { background: #ffebee; border-right: 5px solid var(--danger); }
+  .info-box.info { background: #e3f2fd; border-right: 5px solid var(--primary); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  th {
+    background: var(--grad1);
+    color: white;
+    padding: 14px;
+    text-align: right;
+    font-weight: 700;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:nth-child(even) td { background: #f9fbfd; }
+  tr:hover td { background: #eef4fc; }
+
+  .stats {
+    display: flex;
+    gap: 20px;
+    margin: 25px 0;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 140px;
+    background: var(--grad1);
+    color: white;
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .stat .value {
+    font-size: 32px;
+    font-weight: 900;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .stat .label {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  .stat.orange { background: var(--grad2); }
+  .stat.cyan { background: var(--grad3); }
+  .stat.purple { background: var(--grad4); }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 25px 0;
+  }
+
+  .flow-step {
+    background: white;
+    border: 2px solid var(--primary);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .flow-arrow {
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  .tag {
+    display: inline-block;
+    background: #e3f2fd;
+    color: var(--primary);
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 3px 2px;
+  }
+
+  .tag.orange { background: #fff3e0; color: #e65100; }
+  .tag.green { background: #e8f5e9; color: var(--success); }
+  .tag.cyan { background: #e0f7fa; color: #00695c; }
+  .tag.purple { background: #f3e5f5; color: var(--purple); }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    align-items: start;
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .slide {
+      box-shadow: none;
+      margin: 0;
+      border-radius: 0;
+      min-height: auto;
+      page-break-after: always;
+      width: 100%;
+      max-width: 100%;
+    }
+    .slide:last-child { page-break-after: auto; }
+    @page { size: A4 landscape; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE -->
+<!-- ============================================================ -->
+<div class="slide title-slide">
+  <div class="content">
+    <div class="uni-header">
+      <div>
+        <strong>جامعة إب</strong>
+        كلية الحاسبات والعلوم التطبيقية
+      </div>
+      <div>
+        <strong>مشروع المقرر</strong>
+        مقرر: معالجة اللغات الطبيعية
+      </div>
+    </div>
+
+    <div class="badge">🌐 Web Scraping & Data Collection</div>
+    <h1>بناء نظام كشط البيانات الآلي<br>لموقع سرايا نيوز الأردني</h1>
+    <h2>نظام متزامن عالي الأداء لجمع 100,000 مقال عربي</h2>
+
+    <div class="student-info">
+      <div class="row">
+        <span class="label">إعداد الطالب:</span>
+        <span class="value">محمد حسن محمد العرومي</span>
+      </div>
+      <div class="row">
+        <span class="label">إشراف:</span>
+        <span class="value">د. أكرم الصباري</span>
+      </div>
+      <div class="row">
+        <span class="label">الكلية:</span>
+        <span class="value">كلية الحاسبات والعلوم التطبيقية</span>
+      </div>
+      <div class="row">
+        <span class="label">الجامعة:</span>
+        <span class="value">جامعة إب</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: AGENDA -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">📋</span> محاور العرض</h2>
+  </div>
+  <div class="slide-body">
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>1️⃣ مقدمة ومشكلة المشروع</h4>
+        <p>الحاجة لجمع بيانات عربية ضخمة، وأهداف المشروع.</p>
+      </div>
+      <div class="card orange">
+        <h4>2️⃣ المعمارية العامة</h4>
+        <p>مكونات النظام وخط الأنابيب من الجلب إلى التخزين.</p>
+      </div>
+      <div class="card cyan">
+        <h4>3️⃣ تقنيات البرمجة المتزامنة</h4>
+        <p>asyncio + aiohttp لتحقيق سرعة عالية في الكشط.</p>
+      </div>
+      <div class="card green">
+        <h4>4️⃣ استخلاص البيانات (Parsing)</h4>
+        <p>استخدام selectolax لتحليل HTML واستخراج المحتوى.</p>
+      </div>
+      <div class="card purple">
+        <h4>5️⃣ إدارة البيانات والتخزين</h4>
+        <p>SQLite محلي + JSONL على Google Drive كنسخ احتياطي.</p>
+      </div>
+      <div class="card red">
+        <h4>6️⃣ الضمانات والأمان</h4>
+        <p>الاستئناف التلقائي، إعادة المحاولة، ومعالجة Rate-Limit.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: INTRODUCTION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">1</span> المقدمة وأهداف المشروع</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🎯 المشكلة</h3>
+    <p>الحاجة إلى <b>مجموعة بيانات ضخمة</b> من المقالات العربية المصنَّفة لتدريب نماذج تعلم الآلة (مثل نماذج التصنيف، التلخيص، والترجمة الآلية).</p>
+
+    <h3>💡 الفكرة</h3>
+    <p>بناء نظام آلي يقوم بجمع عشرات الآلاف من المقالات من موقع <b>سرايا نيوز الأردني</b>، بحيث تكون جاهزة للاستخدام في تدريب النماذج العربية.</p>
+
+    <h3>📌 أهداف المشروع</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <h4>الهدف الكمّي</h4>
+        <ul>
+          <li>✅ جمع <b>100,000 مقال</b> عربي</li>
+          <li>✅ استخلاص العنوان والمحتوى والتصنيف</li>
+          <li>✅ تخزين منظم وقابل للبحث</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>الهدف التقني</h4>
+        <ul>
+          <li>✅ سرعة عالية (كشط متزامن)</li>
+          <li>✅ موثوقية (استئناف + Retry ذكي)</li>
+          <li>✅ تنظيم (فئات، نصوص نظيفة)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🌍 لماذا موقع سرايا نيوز؟</h3>
+    <ul>
+      <li>من أكثر المواقع الإخبارية الأردنية شمولاً وتنوعاً</li>
+      <li>يحتوي على فئات متعددة (سياسة، اقتصاد، رياضة، مجتمع...)</li>
+      <li>نصوص عربية فصيحة عالية الجودة</li>
+      <li>روابط بأرقام تسلسلية → سهولة المرور عليها</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: ARCHITECTURE -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">2</span> المعمارية العامة للنظام</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔧 خط الأنابيب الكامل (Pipeline)</h3>
+
+    <div class="flow">
+      <div class="flow-step">📋 توليد الروابط<br><small>article/ID</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">⚡ جلب متزامن<br><small>aiohttp + Retry</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🔍 تحليل HTML<br><small>selectolax</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🧹 تنظيف النص</div>
+    </div>
+    <div class="flow">
+      <div class="flow-step">💾 حفظ في<br><small>SQLite محلي</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">📤 تصدير<br><small>JSONL</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">☁️ نسخ ذرّي<br><small>Google Drive</small></div>
+    </div>
+
+    <h3>🧩 المكوّنات الرئيسية</h3>
+    <div class="grid-3">
+      <div class="card blue">
+        <h4>طبقة الجلب</h4>
+        <p><code>aiohttp</code> + <code>ClientSession</code> مع Retry و Exponential Backoff.</p>
+      </div>
+      <div class="card cyan">
+        <h4>طبقة التحليل</h4>
+        <p><code>selectolax</code> لتحليل HTML بسرعة فائقة عبر CSS Selectors.</p>
+      </div>
+      <div class="card orange">
+        <h4>طبقة التخزين</h4>
+        <p><code>SQLite</code> محلياً + JSONL على Google Drive.</p>
+      </div>
+    </div>
+
+    <h3>⚙️ إعدادات النظام الرئيسية (بعد التعديل)</h3>
+    <table>
+      <tr><th>المعامل</th><th>القيمة</th><th>الوصف</th></tr>
+      <tr><td><code>TARGET_ARTICLES</code></td><td>100,000</td><td>الهدف الكلي للمقالات</td></tr>
+      <tr><td><code>Semaphore</code></td><td>35</td><td>الحد الأقصى للطلبات المتزامنة</td></tr>
+      <tr><td><code>TCPConnector limit</code></td><td>70</td><td>حد الاتصالات المفتوحة</td></tr>
+      <tr><td><code>REQUEST_TIMEOUT</code></td><td>10s</td><td>مهلة كل طلب (تم رفعها من 8s)</td></tr>
+      <tr><td><code>MAX_RETRIES</code></td><td>3</td><td>محاولات إعادة عند الفشل</td></tr>
+      <tr><td><code>BATCH_SIZE</code></td><td>300</td><td>حجم كل دفعة معالجة</td></tr>
+      <tr><td><code>EXPORT_EVERY</code></td><td>5,000</td><td>مزامنة Drive كل 5000 مقال</td></tr>
+      <tr><td><code>PROGRESS_EVERY</code></td><td>10</td><td>طباعة الحالة كل 10 دفعات</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: ASYNCIO -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">3</span> البرمجة غير المتزامنة (asyncio)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>⚡ لماذا غير متزامن؟</h3>
+    <div class="grid-2">
+      <div class="card red">
+        <h4>❌ الطريقة التقليدية (متزامنة)</h4>
+        <p>طلب ← انتظار ← طلب ← انتظار...<br>
+        جمع 100,000 مقال قد يستغرق <b>أياماً</b>.</p>
+      </div>
+      <div class="card green">
+        <h4>✅ الطريقة غير المتزامنة</h4>
+        <p>إرسال 35 طلب دفعة واحدة، ثم استقبال الردود فور وصولها.<br>
+        <b>تسريع 20-40×</b>.</p>
+      </div>
+    </div>
+
+    <h3>🔒 Semaphore — التحكم في التزامن</h3>
+    <pre><code>semaphore = asyncio.Semaphore(35)
+
+async def fetch_article(session, url, semaphore):
+    async with semaphore:
+        # لا يمكن تنفيذ أكثر من 35 طلباً في نفس اللحظة
+        async with session.get(url, ...) as resp:
+            ...
+</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">🎯</span>
+      <div><b>لماذا Semaphore مهم؟</b> يمنع فتح عدد لا نهائي من الاتصالات الذي يؤدي إلى حظر السيرفر لنا (Rate Limiting) أو استنزاف الذاكرة.</div>
+    </div>
+
+    <h3>🚀 تشغيل النظام بشكل دفعات</h3>
+    <pre><code>for i in range(0, len(all_urls), 300):
+    chunk = all_urls[i:i+300]
+    tasks = [fetch_article(session, u, semaphore) for u in chunk]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+</code></pre>
+
+    <div class="info-box info">
+      <span class="icon">🛡️</span>
+      <div>تم استخدام <code>return_exceptions=True</code> لضمان عدم توقف باقي المهام حتى لو فشلت إحداها — تُعاد الأخطاء كقيم بدل أن تُرفع كاستثناءات.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: AIOHTTP + RETRY -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">4</span> aiohttp + إعادة المحاولة الذكية</h2>
+  </div>
+  <div class="slide-body">
+    <h3>📡 إنشاء جلسة العمل</h3>
+    <pre><code>connector = aiohttp.TCPConnector(limit=70, ssl=False)
+
+async with aiohttp.ClientSession(connector=connector) as session:
+    # إعادة استخدام نفس الجلسة لكل الطلبات
+    ...
+</code></pre>
+
+    <h3>🔁 Retry + Exponential Backoff (جديد)</h3>
+    <pre><code>for attempt in range(MAX_RETRIES):          # 3 محاولات
+    try:
+        async with session.get(url, headers=headers,
+                timeout=aiohttp.ClientTimeout(total=10)) as resp:
+
+            if resp.status == 429:              # Rate-Limit
+                await asyncio.sleep(3 * (attempt + 1))
+                continue
+
+            if resp.status != 200:
+                return None
+
+            ctype = resp.headers.get('Content-Type', '')
+            if 'text/html' not in ctype:        # فحص نوع المحتوى
+                return None
+
+            html = await resp.text(encoding='utf-8', errors='ignore')
+            return extract_article_data(url, html)
+
+    except asyncio.TimeoutError:
+        ERROR_STATS['timeout'] += 1
+        await asyncio.sleep(1.5 ** attempt)     # Backoff تصاعدي
+    except aiohttp.ClientError as e:
+        ERROR_STATS[f'client:{type(e).__name__}'] += 1
+        await asyncio.sleep(1.5 ** attempt)
+</code></pre>
+
+    <div class="grid-2">
+      <div class="card orange">
+        <h4>معالجة 429 (Rate-Limit)</h4>
+        <p>عند حظر مؤقت، ينتظر النظام <code>3×(محاولة+1)</code> ثانية ثم يعيد المحاولة تلقائياً.</p>
+      </div>
+      <div class="card blue">
+        <h4>التحقق من Content-Type</h4>
+        <p>تجاهل أي استجابة ليست <code>text/html</code> (مثل الصور أو JSON) لتوفير الوقت.</p>
+      </div>
+    </div>
+
+    <h3>🎭 User-Agent Rotation</h3>
+    <pre><code>USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122...',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/17.2...',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Firefox/123.0'
+]
+
+headers = {
+    'User-Agent': random.choice(USER_AGENTS),
+    'Accept-Language': 'ar-JO,ar;q=0.9,en;q=0.8',
+    'Accept': 'text/html,application/xhtml+xml',
+}
+</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: SELECTOLAX -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">5</span> تحليل HTML باستخدام selectolax</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🌳 لماذا selectolax؟</h3>
+    <div class="grid-3">
+      <div class="card green">
+        <h4>⚡ سريعة جداً</h4>
+        <p>مبنية على مكتبة C تسمى <b>Lexbor</b> — أسرع 3-5× من BeautifulSoup.</p>
+      </div>
+      <div class="card blue">
+        <h4>🎯 CSS Selectors</h4>
+        <p>دعم كامل لمحددات CSS عبر <code>css_first</code> و <code>css</code>.</p>
+      </div>
+      <div class="card orange">
+        <h4>💾 خفيفة الذاكرة</h4>
+        <p>استهلاك أقل بكثير من المكتبات البديلة.</p>
+      </div>
+    </div>
+
+    <h3>📑 استخلاص العناصر الرئيسية</h3>
+    <pre><code>tree = HTMLParser(html)
+
+# 1. الفئة الرئيسية
+cat_node = tree.css_first(".news-mb-3 a, a[href*='/category/']")
+main_category = clean_text(cat_node.text()) if cat_node else ""
+
+# 2. الفئة الفرعية من رابط القسم (Regex)
+m = re.search(r'/category/[^/]+/([^/?#]+)', href)
+sub_category = clean_text(m.group(1).replace('-', ' ')) if m else ""
+
+# 3. العنوان
+h1 = tree.css_first("h1.inner-news-title") or tree.css_first("h1")
+title = clean_text(h1.text()) if h1 else ""
+
+# 4. محتوى المقال
+content_node = tree.css_first("#news-content")
+if not content_node: return None
+</code></pre>
+
+    <h3>🧹 حذف العناصر غير المرغوبة</h3>
+    <pre><code>for unwanted in content_node.css(
+    "ul.loddi_more_related, .read_more_cap, "
+    "script, style, iframe, .pseapi, noscript"
+):
+    unwanted.decompose()   # حذف العقدة نهائياً من الشجرة
+</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">🎯</span>
+      <div><b>الفائدة:</b> الحصول على <b>نص المقال الأصلي فقط</b> دون ضوضاء أو إعلانات، مما يُحسّن جودة البيانات النهائية.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: TEXT CLEANING -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">6</span> تنظيف واستخلاص النص</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🧹 دالة تنظيف النص</h3>
+    <pre><code>def clean_text(text):
+    if not text:
+        return ""
+    return re.sub(r'\s+', ' ', text).strip()
+</code></pre>
+    <p>تقوم الدالة بتوحيد جميع المسافات المتعددة (مسافات، أسطر جديدة، Tabs) إلى مسافة واحدة، وإزالة الفراغات من الأطراف.</p>
+
+    <h3>📝 استخلاص الفقرات</h3>
+    <pre><code>paragraphs = [
+    clean_text(p.text())
+    for p in content_node.css("p")
+    if len(p.text().split()) > 3   # تجاهل الفقرات القصيرة
+]
+
+if not paragraphs:
+    return None
+
+full_text = f"{title}\n" + "\n".join(paragraphs)
+if len(full_text.split()) < 20:    # فحص الحجم الأدنى
+    return None
+</code></pre>
+
+    <h3>✅ معايير جودة القبول</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>الشروط</h4>
+        <ul>
+          <li>وجود عنصر المحتوى <code>#news-content</code></li>
+          <li>وجود فقرات بطول &gt; 3 كلمات</li>
+          <li>الطول الإجمالي &gt; 20 كلمة</li>
+          <li>رمز الحالة HTTP = 200</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h4>الاستثناءات (تُرفض)</h4>
+        <ul>
+          <li>صفحات 404</li>
+          <li>صفحة "غير موجودة"</li>
+          <li>مقالات قصيرة جداً</li>
+          <li>صفحات بدون محتوى</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🚫 فحص صفحات الخطأ (تحسين جديد)</h3>
+    <pre><code>head = html[:1000]                     # أول 1000 حرف (كان 500)
+if "404" in head or "الصفحة غير موجودة" in head:
+    return None
+</code></pre>
+    <p>تم توسيع نافذة الفحص من 500 إلى 1000 حرف لاكتشاف صفحات الخطأ التي قد تحتوي على مقدمات طويلة قبل ظهور كلمة 404.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: DATABASE -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">7</span> التخزين في قاعدة بيانات SQLite</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🗄️ لماذا SQLite محلياً؟</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <h4>المزايا</h4>
+        <ul>
+          <li>⚡ سريع جداً (بدون شبكة)</li>
+          <li>💾 ملف واحد منقول وسهل النسخ</li>
+          <li>🔒 لا يحتاج إعداد سيرفر</li>
+          <li>🛡️ منع التكرار عبر PRIMARY KEY</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>لماذا ليس Google Drive مباشرة؟</h4>
+        <ul>
+          <li>Google Drive بطيء في الكتابة</li>
+          <li>يُحمّل الشبكة والاستهلاك</li>
+          <li>الحل: كتابة محلية + نسخ دوري</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🏗️ بنية الجدول (محدَّثة)</h3>
+    <pre><code>CREATE TABLE IF NOT EXISTS articles (
+    url           TEXT PRIMARY KEY,   -- مفتاح أساسي يمنع التكرار
+    main_category TEXT,               -- الفئة الرئيسية
+    sub_category  TEXT,               -- الفئة الفرعية
+    text          TEXT,               -- النص الكامل
+    scraped_at    TEXT                -- 🆕 طابع زمني للكشط
+);
+
+-- 🆕 فهرس لتسريع الاستعلامات حسب الفئة
+CREATE INDEX IF NOT EXISTS idx_category
+    ON articles(main_category);
+</code></pre>
+
+    <div class="info-box info">
+      <span class="icon">🆕</span>
+      <div><b>التحديثات:</b> تمت إضافة عمود <code>scraped_at</code> لتسجيل زمن كل مقال، وفهرس <code>idx_category</code> لتسريع الاستعلامات التصنيفية.</div>
+    </div>
+
+    <h3>💾 الحفظ بالدفعات (Batch Insert)</h3>
+    <pre><code>def save_batch_to_db(batch):
+    if not batch:
+        return 0
+    conn = sqlite3.connect(LOCAL_DB_FILE)
+    cursor = conn.cursor()
+    cursor.executemany(
+        "INSERT OR IGNORE INTO articles VALUES (?, ?, ?, ?, ?)",
+        batch
+    )
+    inserted = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return inserted
+</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">⚡</span>
+      <div><b><code>INSERT OR IGNORE</code>:</b> يحاول الإدراج، وإن وُجد الرابط مسبقاً (Primary Key) يتجاهله بصمت — حماية مزدوجة من التكرار.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: RESUMABILITY -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">8</span> الاستئناف التلقائي (Resume)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔄 المشكلة</h3>
+    <p>في Google Colab، تنقطع الجلسة بعد ساعات، أو ينقطع الإنترنت. كيف نكمل من حيث توقفنا؟</p>
+
+    <h3>💡 الحل: استرجاع الروابط من مصدرين</h3>
+    <pre><code>def load_existing_urls():
+    saved_urls = set()
+
+    # 1) من ملف JSONL على Drive  (سطر لكل مقال — سريع وآمن)
+    if os.path.exists(JSONL_FILE):
+        with open(JSONL_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue
+                try:
+                    obj = json.loads(line)
+                    if 'url' in obj:
+                        saved_urls.add(obj['url'])
+                except json.JSONDecodeError:
+                    ERROR_STATS['json_lines_corrupted'] += 1
+
+    # 2) من قاعدة البيانات المحلية
+    if os.path.exists(LOCAL_DB_FILE):
+        conn = sqlite3.connect(LOCAL_DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT url FROM articles")
+        for (url,) in cursor.fetchall():
+            saved_urls.add(url)
+        conn.close()
+
+    return saved_urls
+</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">🆕</span>
+      <div><b>التحوّل من JSON Array إلى JSONL:</b> صار كل مقال في سطر مستقل، فلا داعي لتخزين الملف كاملاً في الذاكرة، وأصبح التصدير والاسترجاع أسرع وأكثر أماناً ضد التلف.</div>
+    </div>
+
+    <h3>🎯 كيف يعمل النظام؟</h3>
+    <div class="flow">
+      <div class="flow-step">📂 استرجاع الروابط</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">➖ استثناؤها</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🚀 كشط الجديدة فقط</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">➕ إضافتها للـDB</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: URL GENERATION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">9</span> توليد الروابط الاستراتيجي (محدَّث)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔗 نمط روابط سرايا نيوز</h3>
+    <pre><code>https://www.sarayanews.com/article/{ID}
+</code></pre>
+
+    <h3>🆕 اكتشاف أحدث ID ديناميكياً</h3>
+    <pre><code>async def get_latest_article_id(session):
+    async with session.get(HOMEPAGE_URL, ...) as resp:
+        html = await resp.text(encoding='utf-8', errors='ignore')
+        ids = re.findall(r'/article/(\d+)', html)
+        if ids:
+            latest = max(int(i) for i in ids)
+            return latest
+    return 1_105_000   # قيمة افتراضية عند الفشل
+</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">🧠</span>
+      <div><b>لماذا هذا التحديث؟</b> بدل تثبيت رقم بداية ثابت، يقرأ النظام الصفحة الرئيسية لاستخراج أحدث رقم مقال فعلي — يجعل الكود مستداماً حتى مع نمو الموقع.</div>
+    </div>
+
+    <h3>📉 النطاق التنازلي بهامش 2× (بدل 1.5×)</h3>
+    <pre><code>start_id = await get_latest_article_id(session)
+end_id   = 100_000
+
+needed = (TARGET_ARTICLES - current_saved) * 2   # 🆕 هامش 2×
+all_urls = []
+for aid in range(start_id, end_id, -1):
+    url = f"https://www.sarayanews.com/article/{aid}"
+    if url not in saved_urls:
+        all_urls.append(url)
+        if len(all_urls) >= needed:
+            break
+</code></pre>
+
+    <div class="grid-3">
+      <div class="card blue">
+        <h4>البداية</h4>
+        <p>من أحدث مقال مكتشف من الصفحة الرئيسية.</p>
+      </div>
+      <div class="card cyan">
+        <h4>الاتجاه</h4>
+        <p>تنازلي نحو المقالات الأقدم تدريجياً.</p>
+      </div>
+      <div class="card orange">
+        <h4>هامش الأمان</h4>
+        <p>2× الهدف لضمان الوصول رغم الروابط المعطوبة.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: EXPORT & SYNC -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">10</span> التصدير والمزامنة (محدَّث)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>📤 تصدير JSONL بدل JSON (تحسين جوهري)</h3>
+    <pre><code>def export_to_jsonl_and_sync():
+    conn = sqlite3.connect(LOCAL_DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT url, main_category, sub_category, text, scraped_at "
+        "FROM articles"
+    )
+
+    tmp_file = JSONL_FILE + '.tmp'
+    count = 0
+    with open(tmp_file, 'w', encoding='utf-8') as f:
+        while True:
+            rows = cursor.fetchmany(5000)      # تصدير بالدفعات
+            if not rows: break
+            for row in rows:
+                record = {
+                    "url"          : row[0],
+                    "main_category": row[1] or "",
+                    "sub_category" : row[2] or "",
+                    "text"         : row[3],
+                    "scraped_at"   : row[4] or ""
+                }
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                count += 1
+    conn.close()
+
+    # 🆕 استبدال ذرّي (Atomic Replace)
+    os.replace(tmp_file, JSONL_FILE)
+
+    # نسخ قاعدة البيانات إلى Drive
+    shutil.copy2(LOCAL_DB_FILE, DRIVE_DB_FILE)
+</code></pre>
+
+    <h3>🛡️ لماذا الاستبدال الذرّي؟</h3>
+    <p>نكتب أولاً إلى ملف مؤقت <code>.tmp</code>، ثم نستبدل الأصلي عبر <code>os.replace</code>. فلو انقطعت الجلسة أثناء الكتابة، لن يتلف الملف الأصلي — إما نسخة قديمة كاملة أو نسخة جديدة كاملة.</p>
+
+    <h3>⏰ متى تتم المزامنة؟ (تحديث)</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <h4>دورياً كل 5,000 مقال</h4>
+        <pre style="font-size:11px;"><code>if current_saved - last_export >= EXPORT_EVERY:
+    export_to_jsonl_and_sync()
+    last_export = current_saved
+</code></pre>
+      </div>
+      <div class="card blue">
+        <h4>عند نهاية الجلسة</h4>
+        <p>في نهاية دالة <code>main()</code> يتم استدعاء التصدير النهائي.</p>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <span class="icon">⚖️</span>
+      <div><b>لماذا 5,000 وليس 50,000؟</b> توازن أفضل بين: تقليل مخاطر فقدان البيانات عند انقطاع Colab — وبين عدم إثقال Google Drive بعمليات الكتابة. صار النظام يحفظ تقدماً حقيقياً كل بضع دقائق.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: NEST_ASYNCIO -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">11</span> حل مشكلة loop في Colab</h2>
+  </div>
+  <div class="slide-body">
+    <h3>⚠️ مشكلة شائعة في Jupyter/Colab</h3>
+    <pre style="background:#3e2723;"><code style="color:#ffccbc;">RuntimeError: This event loop is already running</code></pre>
+
+    <p>بيئة Colab تعمل أصلاً داخل event loop (لأنها تستخدم Jupyter)، فلا يمكننا تشغيل <code>asyncio.run()</code> مباشرة.</p>
+
+    <h3>✅ الحل: nest_asyncio</h3>
+    <pre><code>!pip install nest_asyncio -q
+
+import nest_asyncio
+nest_asyncio.apply()    # يُصلح الـ loop الحالي للسماح بالتداخل
+
+asyncio.run(main())     # الآن يعمل بسلام
+</code></pre>
+
+    <div class="info-box info">
+      <span class="icon">🔧</span>
+      <div><b>ماذا يفعل <code>nest_asyncio</code>؟</b> يعدّل الـ event loop الحالي ليقبل إعادة الدخول (Reentrance)، مما يسمح لـ Jupyter و asyncio بالتعايش معاً.</div>
+    </div>
+
+    <h3>📦 الحزم المثبَّتة</h3>
+    <pre><code>!pip install aiohttp selectolax nest_asyncio -q
+</code></pre>
+
+    <table>
+      <tr><th>الحزمة</th><th>الاستخدام</th></tr>
+      <tr><td><code>aiohttp</code></td><td>طلبات HTTP غير متزامنة</td></tr>
+      <tr><td><code>selectolax</code></td><td>تحليل HTML فائق السرعة</td></tr>
+      <tr><td><code>nest_asyncio</code></td><td>تشغيل asyncio داخل Colab</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: WORKFLOW -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">12</span> سير العمل الكامل (محدَّث)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔄 خطوات التنفيذ (Step-by-Step)</h3>
+
+    <div class="flow">
+      <div class="flow-step">1️⃣ ربط Google Drive</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">2️⃣ تهيئة قاعدة البيانات</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">3️⃣ استرجاع الروابط السابقة</div>
+    </div>
+    <div class="flow">
+      <div class="flow-step">4️⃣ اكتشاف أحدث ID</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">5️⃣ توليد الروابط (2×)</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">6️⃣ كشط متزامن + Retry</div>
+    </div>
+    <div class="flow">
+      <div class="flow-step">7️⃣ حفظ DB محلياً</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">8️⃣ تصدير JSONL كل 5000</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">9️⃣ تقرير الأخطاء النهائي</div>
+    </div>
+
+    <h3>💻 الدالة الرئيسية main() (محدثة)</h3>
+    <pre><code>async def main():
+    init_db()                                # تهيئة الجدول
+    saved_urls = load_existing_urls()
+    current_saved = len(saved_urls)
+
+    if current_saved >= TARGET_ARTICLES:
+        print("🎉 الهدف محقق مسبقاً")
+        export_to_jsonl_and_sync()
+        return
+
+    semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)   # 35
+    connector = aiohttp.TCPConnector(limit=TCP_LIMIT, ssl=False)  # 70
+
+    async with aiohttp.ClientSession(connector=connector) as session:
+        start_id = await get_latest_article_id(session)   # 🆕 ديناميكي
+        end_id   = 100_000
+        needed   = (TARGET_ARTICLES - current_saved) * 2  # 🆕 2×
+
+        all_urls = [f"https://www.sarayanews.com/article/{aid}"
+                    for aid in range(start_id, end_id, -1)
+                    if f"https://www.sarayanews.com/article/{aid}"
+                        not in saved_urls][:needed]
+
+        batch = []
+        last_export = current_saved
+        for i in range(0, len(all_urls), BATCH_SIZE):
+            chunk = all_urls[i:i+BATCH_SIZE]
+            tasks = [fetch_article(session, u, semaphore) for u in chunk]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for res in results:
+                if isinstance(res, tuple):
+                    batch.append(res)
+
+            if batch:
+                inserted = save_batch_to_db(batch)
+                current_saved += inserted
+                batch.clear()
+
+            # 🆕 مزامنة كل 5,000 مقال
+            if current_saved - last_export >= EXPORT_EVERY:
+                export_to_jsonl_and_sync()
+                last_export = current_saved
+
+            if current_saved >= TARGET_ARTICLES:
+                break
+
+    export_to_jsonl_and_sync()      # تصدير نهائي
+    # 🆕 طباعة إحصائيات الأخطاء
+    for k, v in ERROR_STATS.most_common():
+        print(f"   {k}: {v:,}")
+</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: ROBUSTNESS -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">13</span> آليات المتانة (بعد التعديل)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🛡️ 10 طبقات حماية (بدل 8)</h3>
+
+    <div class="grid-2">
+      <div class="card green">
+        <h4>1. الاستئناف التلقائي</h4>
+        <p>استرجاع الروابط من DB + JSONL عند إعادة التشغيل.</p>
+      </div>
+      <div class="card blue">
+        <h4>2. منع التكرار المزدوج</h4>
+        <p>PRIMARY KEY + <code>INSERT OR IGNORE</code> + <code>set()</code> في الذاكرة.</p>
+      </div>
+      <div class="card orange">
+        <h4>3. 🆕 Retry ذكي (3 محاولات)</h4>
+        <p>يعيد المحاولة تلقائياً عند فشل الشبكة مع Backoff تصاعدي.</p>
+      </div>
+      <div class="card purple">
+        <h4>4. Timeout 10s</h4>
+        <p>لا يعلق النظام على أي طلب — مهلة أعلى لشبكات أبطأ.</p>
+      </div>
+      <div class="card red">
+        <h4>5. 🆕 معالجة 429</h4>
+        <p>يتعامل مع Rate-Limit بالانتظار بدل الفشل.</p>
+      </div>
+      <div class="card cyan">
+        <h4>6. Semaphore 35</h4>
+        <p>يمنع سحق السيرفر أو حظر الـIP.</p>
+      </div>
+      <div class="card green">
+        <h4>7. User-Agent Rotation</h4>
+        <p>محاكاة متصفحات حقيقية لتفادي الكشف.</p>
+      </div>
+      <div class="card blue">
+        <h4>8. 🆕 كتابة ذرّية (Atomic)</h4>
+        <p>ملف <code>.tmp</code> ثم <code>os.replace</code> — يستحيل تلف JSONL.</p>
+      </div>
+      <div class="card orange">
+        <h4>9. فحوصات الجودة</h4>
+        <p>رفض المقالات القصيرة، صفحـات الخطأ، وContent-Type غير HTML.</p>
+      </div>
+      <div class="card purple">
+        <h4>10. 🆕 إحصائيات الأخطاء</h4>
+        <p><code>ERROR_STATS = Counter()</code> لتشخيص نوع الفشل بدقة.</p>
+      </div>
+    </div>
+
+    <h3>📊 نموذج تقرير الأخطاء النهائي</h3>
+    <pre><code>📋 إحصائيات الأخطاء:
+   timeout: 12
+   http_429: 5
+   http_404: 234
+   non_html: 3
+   parse:AttributeError: 1
+   client:ClientConnectorError: 7
+   json_lines_corrupted: 0
+</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: PERFORMANCE -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">14</span> الأداء والتوقعات</h2>
+  </div>
+  <div class="slide-body">
+    <h3>📈 تقديرات الأداء</h3>
+
+    <div class="stats">
+      <div class="stat"><span class="value">35</span><span class="label">طلب متزامن</span></div>
+      <div class="stat orange"><span class="value">~300</span><span class="label">مقال / دفعة</span></div>
+      <div class="stat cyan"><span class="value">10s</span><span class="label">مهلة قصوى</span></div>
+      <div class="stat purple"><span class="value">100K</span><span class="label">الهدف</span></div>
+    </div>
+
+    <h3>⏱️ مقارنة الطريقتين</h3>
+    <table>
+      <tr>
+        <th>الطريقة</th>
+        <th>السرعة التقريبية</th>
+        <th>جمع 100,000 مقال</th>
+      </tr>
+      <tr>
+        <td>❌ متزامنة (Traditional)</td>
+        <td>~2 مقال / ثانية</td>
+        <td>~14 ساعة</td>
+      </tr>
+      <tr>
+        <td>✅ غير متزامنة (aiohttp + asyncio)</td>
+        <td>~40-60 مقال / ثانية</td>
+        <td>~30-40 دقيقة</td>
+      </tr>
+    </table>
+
+    <div class="info-box tip">
+      <span class="icon">⚡</span>
+      <div><b>تسريع بنسبة 2000%-2800%</b> مقارنة بالطريقة التقليدية — هذا هو جوهر قوة البرمجة غير المتزامنة.</div>
+    </div>
+
+    <h3>🎛️ العوامل المؤثرة على الأداء</h3>
+    <div class="grid-3">
+      <div class="card blue">
+        <h4>سرعة السيرفر</h4>
+        <p>استجابة سرايا نيوز عامل رئيسي.</p>
+      </div>
+      <div class="card cyan">
+        <h4>سرعة الإنترنت</h4>
+        <p>في Colab عادة عالية جداً.</p>
+      </div>
+      <div class="card orange">
+        <h4>حدود Semaphore</h4>
+        <p>قابلة للضبط (35 حالياً).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: TECH STACK -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">15</span> التقنيات والحزم المستخدمة</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🛠️ حزم البرمجة</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>🌐 طبقة الشبكة</h4>
+        <ul>
+          <li><code>aiohttp</code> — طلبات HTTP غير متزامنة</li>
+          <li><code>asyncio</code> — إدارة المهام المتزامنة</li>
+          <li><code>nest_asyncio</code> — تشغيل asyncio في Colab</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>🔍 طبقة التحليل</h4>
+        <ul>
+          <li><code>selectolax</code> — تحليل HTML فائق السرعة</li>
+          <li><code>re</code> — التعبيرات النمطية لتنظيف النص</li>
+        </ul>
+      </div>
+      <div class="card cyan">
+        <h4>💾 طبقة التخزين</h4>
+        <ul>
+          <li><code>sqlite3</code> — قاعدة بيانات محلية</li>
+          <li><code>json</code> — تصدير JSONL منظم</li>
+          <li><code>shutil</code> — نسخ آمن للملفات</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h4>☁️ البيئة والأدوات</h4>
+        <ul>
+          <li><code>google.colab.drive</code> — ربط Drive</li>
+          <li><code>collections.Counter</code> — 🆕 تتبع الأخطاء</li>
+          <li><code>random</code> — اختيار User-Agent</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🎯 التقنيات الرئيسية</h3>
+    <div style="margin-top:15px;">
+      <span class="tag">Asynchronous Programming</span>
+      <span class="tag orange">Web Scraping</span>
+      <span class="tag cyan">HTML Parsing</span>
+      <span class="tag green">CSS Selectors</span>
+      <span class="tag purple">Concurrency Control</span>
+      <span class="tag">Database Design</span>
+      <span class="tag orange">Fault Tolerance</span>
+      <span class="tag cyan">Auto-Resume Logic</span>
+      <span class="tag green">JSONL Streaming</span>
+      <span class="tag purple">Cloud Sync</span>
+      <span class="tag">Batch Processing</span>
+      <span class="tag orange">Rate Limiting</span>
+      <span class="tag cyan">User-Agent Rotation</span>
+      <span class="tag green">Exponential Backoff</span>
+      <span class="tag purple">Atomic File Replace</span>
+      <span class="tag">Error Statistics</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: CHALLENGES -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">16</span> التحديات والحلول</h2>
+  </div>
+  <div class="slide-body">
+    <h3>⚔️ تحديات واجهت المشروع</h3>
+
+    <table>
+      <tr>
+        <th>التحدي</th>
+        <th>الحل المُطبَّق</th>
+      </tr>
+      <tr>
+        <td>⏱️ بطء الكشط التقليدي</td>
+        <td>البرمجة غير المتزامنة + Semaphore</td>
+      </tr>
+      <tr>
+        <td>🔒 خطر حظر الـIP</td>
+        <td>User-Agent Rotation + معالجة 429</td>
+      </tr>
+      <tr>
+        <td>💾 خطر فقدان البيانات</td>
+        <td>DB محلي + JSONL ذرّي على Drive</td>
+      </tr>
+      <tr>
+        <td>🔄 انقطاع جلسات Colab</td>
+        <td>استئناف تلقائي + مزامنة كل 5000</td>
+      </tr>
+      <tr>
+        <td>🔁 التكرار في البيانات</td>
+        <td>PRIMARY KEY + INSERT OR IGNORE</td>
+      </tr>
+      <tr>
+        <td>🐛 أخطاء الشبكة العابرة</td>
+        <td>🆕 MAX_RETRIES=3 + Exponential Backoff</td>
+      </tr>
+      <tr>
+        <td>📉 جودة النصوص</td>
+        <td>حذف العناصر غير المرغوبة + فحص Content-Type</td>
+      </tr>
+      <tr>
+        <td>⚠️ تداخل event loop في Colab</td>
+        <td>nest_asyncio</td>
+      </tr>
+      <tr>
+        <td>🆕 تشخيص الأخطاء</td>
+        <td>ERROR_STATS = Counter() لتقرير نهائي مفصّل</td>
+      </tr>
+    </table>
+
+    <h3>🎓 الدروس المستفادة</h3>
+    <div class="grid-3">
+      <div class="card green">
+        <h4>تصميم الأنظمة</h4>
+        <p>الفصل الواضح بين الطبقات يسهّل الصيانة والتطوير.</p>
+      </div>
+      <div class="card blue">
+        <h4>التفكير الدفاعي</h4>
+        <p>افترض دائماً أن الأخطاء ستحدث، واجعل النظام قادراً على التعافي.</p>
+      </div>
+      <div class="card orange">
+        <h4>الأداء vs. الأمان</h4>
+        <p>الموازنة بين السرعة العالية وحماية السيرفر والـIP.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: RESULTS -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">17</span> النتائج والمخرجات</h2>
+  </div>
+  <div class="slide-body">
+    <h3>📦 المخرجات النهائية</h3>
+
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>📄 ملف JSONL</h4>
+        <p><code>dataset_sarayanews.jsonl</code></p>
+        <ul>
+          <li>سطر واحد لكل مقال (JSON Lines)</li>
+          <li>مُشفَّر بـUTF-8 بالكامل</li>
+          <li>يُقرأ ويفتح بسرعة فائقة</li>
+          <li>آمن ضد التلف (Atomic Replace)</li>
+        </ul>
+      </div>
+      <div class="card cyan">
+        <h4>🗄️ قاعدة بيانات SQLite</h4>
+        <p><code>sarayanews_dataset.db</code></p>
+        <ul>
+          <li>قابلة للاستعلام المباشر</li>
+          <li>فهرس على الفئات <code>idx_category</code></li>
+          <li>عمود <code>scraped_at</code> للزمن</li>
+          <li>نسخة احتياطية كاملة على Drive</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>📊 بنية كل سجل (JSONL)</h3>
+    <pre><code>{"url": "https://www.sarayanews.com/article/1050000",
+ "main_category": "اقتصاد", "sub_category": "",
+ "text": "عنوان المقال\nالفقرة الأولى...\nالفقرة الثانية...",
+ "scraped_at": "2025-01-15 14:32:07"}</code></pre>
+
+    <h3>🎯 استخدامات مجموعة البيانات</h3>
+    <div class="grid-3">
+      <div class="card green">
+        <h4>تصنيف النصوص</h4>
+        <p>تدريب نماذج التصنيف الموضوعي.</p>
+      </div>
+      <div class="card purple">
+        <h4>تلخيص النصوص</h4>
+        <p>بناء نماذج التلخيص التلقائي.</p>
+      </div>
+      <div class="card orange">
+        <h4>تحليل الأخبار</h4>
+        <p>دراسات اتجاهات المواضيع عبر الزمن.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: FUTURE WORK -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">18</span> التطويرات المستقبلية</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🚀 أفكار للتوسع المستقبلي</h3>
+
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>🌐 توسيع المصادر</h4>
+        <ul>
+          <li>إضافة مواقع عربية أخرى</li>
+          <li>بناء كاشط عام متعدد المواقع</li>
+          <li>دعم كشط الوسائط (صور/فيديو)</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>⚡ تحسين الأداء</h4>
+        <ul>
+          <li>استخدام <code>uvloop</code> لتسريع asyncio</li>
+          <li>توزيع المهام على عدة IPs (Proxies)</li>
+          <li>استخدام مكتبات C++ للتحليل</li>
+        </ul>
+      </div>
+      <div class="card cyan">
+        <h4>🧹 تحسين الجودة</h4>
+        <ul>
+          <li>دمج نموذج لتوحيد التصنيفات تلقائياً</li>
+          <li>إزالة التكرار الدلالي (Semantic Dedup)</li>
+          <li>كشف المقالات المُعاد نشرها</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h4>💾 البنية التحتية</h4>
+        <ul>
+          <li>الترحيل إلى PostgreSQL أو MongoDB</li>
+          <li>لوحة تحكم لمتابعة الإحصائيات</li>
+          <li>جدولة تلقائية عبر Cron Jobs</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box tip" style="margin-top:25px;">
+      <span class="icon">🌟</span>
+      <div><b>رؤية مستقبلية:</b> تحويل النظام إلى <b>منصة كشط بيانات عربية متكاملة</b> قادرة على جمع ملايين المقالات من مصادر متعددة، مع ضمان الجودة والتنظيم التلقائي.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 21: CONCLUSION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">19</span> الخلاصة</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🎯 ما تم إنجازه</h3>
+    <ul>
+      <li>✅ بناء <b>نظام كشط متزامن عالي الأداء</b> بسرعة تفوق الطرق التقليدية بـ20-40×</li>
+      <li>✅ تصميم <b>معمارية متعددة الطبقات</b> (جلب، تحليل، تخزين)</li>
+      <li>✅ تطبيق <b>10 آليات حماية</b> لضمان الموثوقية والمتانة</li>
+      <li>✅ تصميم نظام <b>استئناف تلقائي</b> يحمي من فقدان البيانات</li>
+      <li>✅ 🆕 <b>Retry ذكي + Exponential Backoff</b> لمواجهة تقلّبات الشبكة</li>
+      <li>✅ 🆕 <b>معالجة 429 (Rate-Limit)</b> بدل الفشل الفوري</li>
+      <li>✅ 🆕 <b>JSONL بدل JSON</b> مع كتابة ذرّية لمقاومة الانقطاع</li>
+      <li>✅ 🆕 <b>اكتشاف أحدث ID ديناميكياً</b> من الصفحة الرئيسية</li>
+      <li>✅ 🆕 <b>مزامنة كل 5000 مقال</b> بدل 50000</li>
+      <li>✅ 🆕 <b>إحصائيات أخطاء مفصّلة</b> عبر Counter</li>
+    </ul>
+
+    <h3>🎓 القيمة العلمية والعملية</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>علمياً</h4>
+        <p>تطبيق عملي لمفاهيم <b>Asynchronous Programming</b> و <b>Web Scraping</b> و<b>Fault Tolerance</b> في بناء أنظمة جمع بيانات حقيقية.</p>
+      </div>
+      <div class="card orange">
+        <h4>عملياً</h4>
+        <p>مجموعة بيانات عربية ضخمة تُغذّي مشاريع <b>معالجة اللغات الطبيعية</b> المستقبلية.</p>
+      </div>
+    </div>
+
+    <div class="info-box tip" style="margin-top:25px;">
+      <span class="icon">🌟</span>
+      <div><b>الرسالة الرئيسية:</b> البرمجة غير المتزامنة ليست مجرد تحسين تقني — بل <b>عنصر حاسم</b> في بناء أنظمة جمع البيانات على نطاق واسع، مع طبقات متكاملة من الأمان والموثوقية.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 22: THANK YOU -->
+<!-- ============================================================ -->
+<div class="slide title-slide">
+  <div class="content">
+    <div class="uni-header">
+      <div>
+        <strong>جامعة إب</strong>
+        كلية الحاسبات والعلوم التطبيقية
+      </div>
+      <div>
+        <strong>مشروع المقرر</strong>
+        مقرر: ذكاء إصطناعي
+      </div>
+    </div>
+
+    <div class="badge">🎓 نهاية العرض</div>
+    <h1>شكراً لحسن استماعكم</h1>
+    <h2>أسئلتكم واستفساراتكم محل ترحيب</h2>
+
+    <div class="student-info" style="margin-top:40px;">
+      <div class="row">
+        <span class="label">إعداد الطالب:</span>
+        <span class="value">محمد حسن محمد العرومي</span>
+      </div>
+      <div class="row">
+        <span class="label">إشراف:</span>
+        <span class="value">د. أكرم الصباري</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>v>
+
+</body>
+</html>

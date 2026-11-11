@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>AraT5 Hierarchical Classifier - عرض تقديمي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a237e;
+    --accent: #ff6f00;
+    --accent2: #00bcd4;
+    --success: #2e7d32;
+    --danger: #c62828;
+    --bg-dark: #0d1117;
+    --bg-light: #f5f7fa;
+    --text: #1a1a1a;
+    --muted: #5a6473;
+    --border: #e0e6ed;
+    --grad1: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+    --grad2: linear-gradient(135deg, #ff6f00 0%, #f57c00 100%);
+    --grad3: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  }
+
+  body {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    background: #2c3038;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 30px 10px;
+  }
+
+  .slide {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 700px;
+    margin: 0 auto 40px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    overflow: hidden;
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============ TITLE SLIDE ============ */
+  .slide.title-slide {
+    background: var(--grad1);
+    color: white;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 80px 60px;
+  }
+
+  .slide.title-slide::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(255,111,0,0.3), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .slide.title-slide::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,188,212,0.25), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .title-slide .content { position: relative; z-index: 2; }
+
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 22px;
+    border-radius: 50px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+  }
+
+  .title-slide h1 {
+    font-size: 58px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .title-slide h2 {
+    font-size: 26px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-bottom: 40px;
+  }
+
+  .title-slide .meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    font-size: 16px;
+  }
+
+  .title-slide .meta div {
+    background: rgba(255,255,255,0.1);
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* ============ SLIDE HEADER ============ */
+  .slide-header {
+    background: var(--grad1);
+    color: white;
+    padding: 28px 50px;
+    position: relative;
+  }
+
+  .slide-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 120px; height: 5px;
+    background: var(--grad2);
+    border-radius: 5px 0 0 0;
+  }
+
+  .slide-header h2 {
+    font-size: 34px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .slide-header .num {
+    background: var(--accent);
+    width: 45px; height: 45px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+
+  .slide-body {
+    padding: 40px 50px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ============ CONTENT ELEMENTS ============ */
+  h3 {
+    color: var(--primary);
+    font-size: 24px;
+    margin: 25px 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--accent);
+    display: inline-block;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  p { margin-bottom: 15px; font-size: 17px; }
+
+  ul, ol { padding-right: 25px; margin-bottom: 18px; }
+
+  li {
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+
+  li::marker { color: var(--accent); font-weight: 700; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 20px 0;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .card {
+    background: var(--bg-light);
+    border-radius: 12px;
+    padding: 22px;
+    border-right: 5px solid var(--accent);
+    transition: transform 0.2s;
+  }
+
+  .card.blue { border-right-color: var(--primary); }
+  .card.cyan { border-right-color: var(--accent2); }
+  .card.green { border-right-color: var(--success); }
+  .card.red { border-right-color: var(--danger); }
+
+  .card h4 {
+    font-size: 19px;
+    color: var(--primary);
+    margin-bottom: 10px;
+    font-weight: 800;
+  }
+
+  .card p, .card li {
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .card ul { margin: 0; padding-right: 20px; }
+
+  /* Code blocks */
+  pre {
+    background: #1e222a;
+    color: #e6edf3;
+    padding: 20px 22px;
+    border-radius: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    direction: ltr;
+    text-align: left;
+    overflow-x: auto;
+    margin: 15px 0;
+    border-right: 4px solid var(--accent2);
+  }
+
+  code {
+    background: #eef2f7;
+    color: #c62828;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* Info boxes */
+  .info-box {
+    padding: 18px 22px;
+    border-radius: 10px;
+    margin: 18px 0;
+    font-size: 16px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .info-box .icon {
+    font-size: 26px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .info-box.tip { background: #e8f5e9; border-right: 5px solid var(--success); }
+  .info-box.warn { background: #fff3e0; border-right: 5px solid var(--accent); }
+  .info-box.err  { background: #ffebee; border-right: 5px solid var(--danger); }
+  .info-box.info { background: #e3f2fd; border-right: 5px solid var(--primary); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  th {
+    background: var(--grad1);
+    color: white;
+    padding: 14px;
+    text-align: right;
+    font-weight: 700;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:nth-child(even) td { background: #f9fbfd; }
+  tr:hover td { background: #eef4fc; }
+
+  /* Stats row */
+  .stats {
+    display: flex;
+    gap: 20px;
+    margin: 25px 0;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 140px;
+    background: var(--grad1);
+    color: white;
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .stat .value {
+    font-size: 36px;
+    font-weight: 900;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .stat .label {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  .stat.orange { background: var(--grad2); }
+  .stat.cyan { background: var(--grad3); }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 25px 0;
+  }
+
+  .flow-step {
+    background: white;
+    border: 2px solid var(--primary);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .flow-arrow {
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    background: #e3f2fd;
+    color: var(--primary);
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 3px 2px;
+  }
+
+  .tag.orange { background: #fff3e0; color: #e65100; }
+  .tag.green { background: #e8f5e9; color: var(--success); }
+  .tag.cyan { background: #e0f7fa; color: #00695c; }
+
+  /* Two-column split for code + explanation */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    align-items: start;
+  }
+
+  /* Footer */
+  .slide-footer {
+    padding: 15px 50px;
+    background: #f5f7fa;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; padding: 0; }
+    .slide {
+      box-shadow: none;
+      margin: 0;
+      border-radius: 0;
+      min-height: auto;
+      page-break-after: always;
+      width: 100%;
+      max-width: 100%;
+    }
+    .slide:last-child { page-break-after: auto; }
+    @page { size: A4 landscape; margin: 0; }
+  }
+
+  /* Small slides adjustments */
+  .small-slide { min-height: 600px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE -->
+<!-- ============================================================ -->
+<div class="slide title-slide">
+  <div class="content">
+    <div class="badge">🎓 مشروع  — معالجة اللغة العربية الطبيعية</div>
+    <h1>تصنيف هرمي للمقالات العربية</h1>
+    <h2>باستخدام نموذج AraT5-base وتقنيات التوليد Seq2Seq</h2>
+    <div class="meta">
+      <div>🧠 <b>AraT5-base</b></div>
+      <div>⚙️ Seq2Seq Fine-tuning</div>
+      <div>📊 تصنيف هرمي (رئيسي + فرعي)</div>
+      <div>🚀 PyTorch + Transformers</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: AGENDA -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">📋</span> محاور العرض</h2>
+  </div>
+  <div class="slide-body">
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>1️⃣ المقدمة والمشكلة</h4>
+        <p>تعريف المشكلة، أهمية التصنيف الهرمي، والتحديات في العربية.</p>
+      </div>
+      <div class="card orange">
+        <h4>2️⃣ معالجة البيانات</h4>
+        <p>تنظيف النصوص، إزالة HTML، التقسيم الطبقي (Stratified Split).</p>
+      </div>
+      <div class="card cyan">
+        <h4>3️⃣ صياغة Seq2Seq</h4>
+        <p>تحويل مهمة التصنيف إلى توليد نص مع رموز خاصة.</p>
+      </div>
+      <div class="card green">
+        <h4>4️⃣ نموذج AraT5</h4>
+        <p>المعمارية، التوكنايزر، والرموز الخاصة المضافة.</p>
+      </div>
+      <div class="card red">
+        <h4>5️⃣ استراتيجيات التدريب</h4>
+        <p>LoRA، تجميد المُشفّر، Full Fine-tuning، ودقة مختلطة.</p>
+      </div>
+      <div class="card blue">
+        <h4>6️⃣ التقييم والنتائج</h4>
+        <p>مقاييس الأداء، تحليل الأخطاء، والاستنتاجات.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: PROBLEM STATEMENT -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">1</span> المشكلة وأهمية المشروع</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🎯 المشكلة</h3>
+    <p>الحاجة إلى نظام آلي لتصنيف المقالات العربية الإخبارية إلى <b>فئة رئيسية</b> و<b>فئة فرعية</b> بشكل هرمي دقيق، بدل التصنيف المسطح التقليدي.</p>
+
+    <h3>⚠️ التحديات في اللغة العربية</h3>
+    <div class="grid-2">
+      <div class="card red">
+        <h4>لغوياً</h4>
+        <ul>
+          <li>ثراء صرفي وصرفي معقد</li>
+          <li>تعدد اللهجات والمرادفات</li>
+          <li>غياب التشكيل في النصوص</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>تقنياً</h4>
+        <ul>
+          <li>قلة البيانات المصنّفة عربياً</li>
+          <li>عدم توازن الفئات (Class Imbalance)</li>
+          <li>تعدد الفئات الفرعية (مئات)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <span class="icon">💡</span>
+      <div><b>الحل المقترح:</b> استخدام نموذج <b>AraT5-base</b> المُدرَّب مسبقاً على نصوص عربية ضخمة، مع صياغة المهمة كـ<b>Seq2Seq</b> (توليد نص)، مما يسمح بتمثيل التسلسل الهرمي في مخرجات واحدة.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: ARCHITECTURE OVERVIEW -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">2</span> المعمارية العامة للنظام</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔧 خط الأنابيب الكامل (Pipeline)</h3>
+
+    <div class="flow">
+      <div class="flow-step">📥 بيانات خام<br><small>JSON</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🧹 تنظيف ومعالجة</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">✂️ تقسيم طبقي<br><small>Train/Val/Test</small></div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🔄 تحويل Seq2Seq</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🔤 توكنايز</div>
+    </div>
+    <div class="flow">
+      <div class="flow-step">🧠 تحميل AraT5</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">⚙️ إضافة رموز خاصة</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">🏋️ التدريب</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">📊 التقييم</div>
+      <span class="flow-arrow">←</span>
+      <div class="flow-step">💾 حفظ النموذج</div>
+    </div>
+
+    <h3>📦 المكوّنات الرئيسية</h3>
+    <div class="grid-3">
+      <div class="card blue">
+        <h4>البيانات</h4>
+        <p>ملف <code>final_filtered_data.json</code> يحتوي على مقالات منظّمة (عنوان، محتوى، فئة، فئة فرعية).</p>
+      </div>
+      <div class="card cyan">
+        <h4>النموذج</h4>
+        <p><b>UBC-NLP/AraT5-base</b> — نموذج T5 مُخصص للعربية بحجم ~220M معامل.</p>
+      </div>
+      <div class="card orange">
+        <h4>الإطار</h4>
+        <p>PyTorch + HuggingFace Transformers + Datasets + Evaluate + PEFT.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: DATA CLEANING -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">3</span> تنظيف البيانات ومعالجتها</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🧹 دالة <code>normalize_article_text</code></h3>
+    <p>تُطبّق سلسلة من عمليات التنظيف على كل نص لضمان جودة عالية قبل التدريب:</p>
+
+    <div class="split">
+      <div>
+        <pre><code>raw = html.unescape(raw)
+if re.search(r"&lt;[a-zA-Z][^&gt;]*&gt;", raw):
+    raw = BeautifulSoup(raw, "html.parser")\
+          .get_text(" ", strip=True)
+
+for ch in ["\u200b","\u200c","\u200d","\ufeff"]:
+    raw = raw.replace(ch, "")
+
+raw = re.sub(r"[\t\r\n]+", " ", raw)
+raw = re.sub(r"\s+", " ", raw)
+
+for pat in _AD_PATTERNS:
+    raw = re.sub(pat, " ", raw, flags=re.I)
+
+raw = re.sub(r"https?://\S+|www\.\S+", " ", raw)
+raw = re.sub(r"\b\S+@\S+\.\S+\b", " ", raw)</code></pre>
+      </div>
+      <div>
+        <div class="card green">
+          <h4>الخطوات المطبقة</h4>
+          <ul>
+            <li>✅ فك تشفير HTML Entities</li>
+            <li>✅ إزالة وسوم HTML عبر BeautifulSoup</li>
+            <li>✅ حذف المحارف غير المرئية (ZWNJ, ZWJ, BOM)</li>
+            <li>✅ توحيد المسافات والأسطر</li>
+            <li>✅ إزالة أنماط إعلانية (اضغط هنا...)</li>
+            <li>✅ إزالة الروابط والبريد الإلكتروني</li>
+          </ul>
+        </div>
+        <div class="info-box warn">
+          <span class="icon">🎯</span>
+          <div><b>الهدف:</b> تقليل الضوضاء وزيادة جودة التمثيلات التي يتعلمها النموذج.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: STRATIFIED SPLIT -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">4</span> التقسيم الطبقي للبيانات</h2>
+  </div>
+  <div class="slide-body">
+    <h3>✂️ لماذا التقسيم الطبقي (Stratified Split)؟</h3>
+    <p>لضمان أن كل فئة (رئيسية + فرعية) تكون ممثلة بنفس النسبة في جميع المجموعات، مما يمنع انحياز النموذج.</p>
+
+    <h3>🔑 المفتاح المركّب للتصنيف الطبقي</h3>
+    <pre><code>articles_table["label_key"] = (
+    articles_table["category"].astype(str)
+    + "|||"
+    + articles_table["subcategory"].astype(str)
+)
+
+# تقسيم أولي: 80% تدريب / 20% احتياطي
+train_split, holdout_split = train_test_split(
+    articles_table,
+    test_size=0.20,
+    random_state=RANDOM_STATE,
+    stratify=articles_table["label_key"],
+)
+
+# تقسيم الاحتياطي: 50% تحقق / 50% اختبار
+val_split, test_split = train_test_split(
+    holdout_split,
+    test_size=0.50,
+    random_state=RANDOM_STATE,
+    stratify=holdout_split["label_key"],
+)</code></pre>
+
+    <div class="stats">
+      <div class="stat"><span class="value">80%</span><span class="label">تدريب</span></div>
+      <div class="stat orange"><span class="value">10%</span><span class="label">تحقق</span></div>
+      <div class="stat cyan"><span class="value">10%</span><span class="label">اختبار</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: SEQ2SEQ FORMULATION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">5</span> صياغة المهمة كـ Seq2Seq</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔄 الفكرة الجوهرية</h3>
+    <p>بدلاً من تدريب مصنّف تقليدي (Softmax)، نحوّل المهمة إلى <b>توليد نص</b>: النموذج يتعلم إنتاج سلسلة تحتوي على الفئة الرئيسية والفرعية معاً.</p>
+
+    <div class="split">
+      <div>
+        <h4 style="color:var(--primary); margin-bottom:10px;">📥 المدخل (Encoder Input)</h4>
+        <pre><code>def compose_encoder_input(row):
+    return (
+        "المهمة: تصنيف هرمي\n\n"
+        f"العنوان:\n{row['title']}\n\n"
+        f"النص:\n{row['content']}"
+    )</code></pre>
+      </div>
+      <div>
+        <h4 style="color:var(--accent); margin-bottom:10px;">📤 المخرج (Decoder Target)</h4>
+        <pre><code>def compose_decoder_target(row):
+    return (
+        f"&lt;main_class&gt;{row['category']} "
+        f"&lt;sub_class&gt;{row['subcategory']}"
+    )</code></pre>
+      </div>
+    </div>
+
+    <div class="info-box info">
+      <span class="icon">🎁</span>
+      <div><b>ميزة هذه الصياغة:</b> الرموز الخاصة <code>&lt;main_class&gt;</code> و<code>&lt;sub_class&gt;</code> تعمل كـ<i>محفّزات هيكلية</i> تجعل النموذج يفصل بين المستويين الهرميين، ويستطيع لاحقاً استخراجهما عبر Regex.</div>
+    </div>
+
+    <h3>📄 مثال حقيقي</h3>
+    <pre><code>Input :  المهمة: تصنيف هرمي
+         العنوان: انطلاق المفاوضات التجارية
+         النص: أعلنت وزارة التجارة اليوم...
+Target: &lt;main_class&gt;اقتصاد &lt;sub_class&gt;تجارة دولية&lt;/s&gt;</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: ARAT5 MODEL -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">6</span> نموذج AraT5-base</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🧠 لماذا AraT5؟</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>المعمارية</h4>
+        <p>نموذج <b>Encoder-Decoder</b> قائم على T5، مُدرَّب مسبقاً على كميات ضخمة من النصوص العربية (OSCAR + Wikipedia).</p>
+      </div>
+      <div class="card orange">
+        <h4>المزايا</h4>
+        <ul>
+          <li>يدعم التوليد والتصنيف معاً</li>
+          <li>يعالج التعدد الصرفي العربي</li>
+          <li>أداء SOTA في مهام عربية عديدة</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🔤 التوكنايزر والرموز الخاصة</h3>
+    <pre><code>tokenizer = AutoTokenizer.from_pretrained("UBC-NLP/AraT5-base")
+
+added = tokenizer.add_special_tokens({
+    "additional_special_tokens": ["&lt;main_class&gt;", "&lt;sub_class&gt;"]
+})
+
+# ⚠️ مهم جداً: إعادة تحجيم الطبقات المضمّنة
+model.resize_token_embeddings(len(tokenizer))</code></pre>
+
+    <div class="info-box warn">
+      <span class="icon">⚠️</span>
+      <div><b>نقطة حرجة:</b> إضافة رموز جديدة تستلزم <code>resize_token_embeddings</code>، وإلا سيحدث خطأ <i>IndexError</i> أثناء التدريب لأن حجم المفردات لم يعد متوافقاً.</div>
+    </div>
+
+    <h3>📊 إعدادات التوكنايز</h3>
+    <table>
+      <tr><th>المعامل</th><th>القيمة</th><th>السبب</th></tr>
+      <tr><td><code>SRC_MAX_LEN</code></td><td>512</td><td>يغطي معظم المقالات دون قطع</td></tr>
+      <tr><td><code>TGT_MAX_LEN</code></td><td>16</td><td>المخرج قصير (فئة + فرعية)</td></tr>
+      <tr><td><code>padding</code></td><td>dynamic</td><td>DataCollator يتولى الحشو</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: TOKENIZATION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">7</span> التوكنايز والتخزين المؤقت</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔤 دالة التوكنايز الموحّدة</h3>
+    <pre><code>def tokenize_examples(batch):
+    enc = tokenizer(
+        batch["input"],
+        max_length=SRC_MAX_LEN,
+        truncation=True
+    )
+    tgt = tokenizer(
+        text_target=batch["target"],
+        max_length=TGT_MAX_LEN,
+        truncation=True
+    )
+    enc["labels"] = [
+        t if t != tokenizer.pad_token_id else -100
+        for t in tgt["input_ids"]
+    ]
+    return enc</code></pre>
+
+    <h3>💡 لماذا <code>-100</code>؟</h3>
+    <div class="info-box tip">
+      <span class="icon">🧩</span>
+      <div>في PyTorch، القيمة <code>-100</code> تُخبر دالة الخسارة <code>CrossEntropyLoss</code> بتجاهل هذه المواقع. نضعها على رموز الحشو (padding) حتى لا يتعلم النموذج توليد <code>&lt;pad&gt;</code>.</div>
+    </div>
+
+    <h3>⚡ التخزين المؤقت (Caching)</h3>
+    <pre><code>if os.path.exists(TOKEN_CACHE) and DATA_FRACTION == 1.0:
+    tokenized_corpus = load_from_disk(TOKEN_CACHE)
+else:
+    tokenized_corpus = corpus.map(
+        tokenize_examples,
+        batched=True,
+        remove_columns=["input", "target"],
+        desc="Tokenizing"
+    )
+    if DATA_FRACTION == 1.0:
+        tokenized_corpus.save_to_disk(TOKEN_CACHE)</code></pre>
+    <p>✅ يوفّر <b>دقائق من إعادة التوكنايز</b> عند إعادة تشغيل الـ Notebook.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: FINETUNING MODES -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">8</span> استراتيجيات الضبط الدقيق</h2>
+  </div>
+  <div class="slide-body">
+    <p>يدعم النظام <b>ثلاث استراتيجيات</b> قابلة للتبديل عبر متغير واحد <code>FINETUNE_MODE</code>:</p>
+
+    <div class="grid-3">
+      <div class="card cyan">
+        <h4>🔷 LoRA</h4>
+        <p><b>Low-Rank Adaptation</b><br>يضيف مصفوفات منخفضة الرتبة إلى طبقات الانتباه (q, v).</p>
+        <ul>
+          <li>r = 16، α = 32</li>
+          <li>dropout = 0.05</li>
+          <li>~1% معاملات قابلة للتدريب</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>❄️ تجميد المُشفّر</h4>
+        <p>يُجمَّد الـEncoder بالكامل، ويُدرَّب الـDecoder فقط.</p>
+        <ul>
+          <li>أسرع بـ2× من الكامل</li>
+          <li>ذاكرة أقل</li>
+          <li>مناسب للبيانات الصغيرة</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>🔥 Full Fine-tune</h4>
+        <p>تدريب كل المعاملات مع Gradient Checkpointing.</p>
+        <ul>
+          <li>أفضل أداء نظرياً</li>
+          <li>يحتاج ذاكرة عالية</li>
+          <li>بطيء لكن شامل</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🧊 Gradient Checkpointing — نقطة حرجة</h3>
+    <pre><code>if FINETUNE_MODE == "freeze_encoder":
+    for p in model.encoder.parameters():
+        p.requires_grad = False
+    for p in model.shared.parameters():
+        p.requires_grad = True
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()  # ✅ ضروري وإلا لن يمر التدرج
+else:
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()  # ✅ نفس السبب</code></pre>
+
+    <div class="info-box err">
+      <span class="icon">🐛</span>
+      <div><b>مشكلة شائعة:</b> عند تفعيل Gradient Checkpointing، تختفي الـgradients لأن المدخلات لا تتطلب تدرجاً. الحل: <code>enable_input_require_grads()</code>.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: LORA DETAIL -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">9</span> LoRA بالتفصيل</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🧮 الفكرة الرياضية</h3>
+    <p>بدل تحديث المصفوفة الكاملة <code>W</code> (d×k)، نضيف ΔW = B·A حيث:</p>
+    <div class="grid-3">
+      <div class="card cyan">
+        <h4>A ∈ ℝ<sup>r×k</sup></h4>
+        <p>مصفوفة صغيرة تُهيَّأ عشوائياً بـGaussian.</p>
+      </div>
+      <div class="card cyan">
+        <h4>B ∈ ℝ<sup>d×r</sup></h4>
+        <p>مصفوفة صغيرة تُهيَّأ بأصفار مبدئياً.</p>
+      </div>
+      <div class="card green">
+        <h4>r &lt;&lt; min(d,k)</h4>
+        <p>الرتبة المنخفضة تقلل عدد المعاملات بشكل هائل.</p>
+      </div>
+    </div>
+
+    <h3>⚙️ الإعدادات المستخدمة</h3>
+    <pre><code>from peft import LoraConfig, TaskType, get_peft_model
+
+cfg = LoraConfig(
+    r=ADAPTER_RANK,             # 16
+    lora_alpha=ADAPTER_SCALE,   # 32
+    lora_dropout=ADAPTER_DROPOUT,# 0.05
+    bias="none",
+    task_type=TaskType.SEQ_2_SEQ_LM,
+    target_modules=["q", "v"],  # طبقات الاستعلام والقيمة فقط
+)
+
+model = get_peft_model(model, cfg)
+model.print_trainable_parameters()</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">💡</span>
+      <div><b>لماذا q و v تحديداً؟</b> الأبحاث أظهرت أن تكييف مصفوفات الاستعلام والقيمة في الـAttention يكفي لتحقيق أداء ممتاز مع أقل عدد من المعاملات.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: TRAINING CONFIG -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">10</span> إعدادات التدريب</h2>
+  </div>
+  <div class="slide-body">
+    <h3>⚙️ المعاملات الفائقة (Hyperparameters)</h3>
+    <table>
+      <tr><th>المعامل</th><th>Full / Frozen</th><th>LoRA</th></tr>
+      <tr><td>Learning Rate</td><td>3e-5</td><td>2e-5</td></tr>
+      <tr><td>Train Batch Size</td><td>4</td><td>8</td></tr>
+      <tr><td>Eval Batch Size</td><td>32</td><td>4</td></tr>
+      <tr><td>Gradient Accumulation</td><td>8</td><td>2</td></tr>
+      <tr><td>Effective Batch</td><td>32</td><td>16</td></tr>
+      <tr><td>Epochs</td><td>4</td><td>4</td></tr>
+      <tr><td>Warmup Steps</td><td>500</td><td>200</td></tr>
+      <tr><td>Optimizer</td><td colspan="2">AdamW (torch)</td></tr>
+      <tr><td>LR Scheduler</td><td colspan="2">Cosine</td></tr>
+      <tr><td>Weight Decay</td><td colspan="2">0.01</td></tr>
+      <tr><td>Max Grad Norm</td><td colspan="2">1.0</td></tr>
+    </table>
+
+    <h3>🎯 دقة مختلطة تلقائية</h3>
+    <pre><code>if torch.cuda.is_available():
+    _cap = torch.cuda.get_device_capability(0)
+    if _cap[0] >= 8:  # Ampere أو أحدث
+        use_bf16 = True
+        prec_label = "bf16"
+# A100 / RTX 30xx/40xx → bf16 (أفضل وأكثر استقراراً)
+# T4 / V100 → fp32 (لأنها لا تدعم bf16 جيداً)</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: TRAINER -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">11</span> الـ Trainer والتوافقية</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🛡️ نسخة آمنة لكل إصدارات Transformers</h3>
+    <p>مكتبة Transformers تغيّرت عبر الإصدارات، لذلك اعتمد الكود على <code>try/except</code>:</p>
+
+    <pre><code># التوافق مع API الجديد والقديم
+try:
+    training_args = Seq2SeqTrainingArguments(
+        eval_strategy="steps",
+        eval_steps=EVAL_EVERY,
+        **_common_args,
+    )
+    print("Using eval_strategy (new API).")
+except TypeError:
+    training_args = Seq2SeqTrainingArguments(
+        evaluation_strategy="steps",
+        eval_steps=EVAL_EVERY,
+        **_common_args,
+    )
+    print("Using evaluation_strategy (legacy API).")</code></pre>
+
+    <pre><code># نفس الحيلة للـTrainer
+try:
+    trainer = Seq2SeqTrainer(processing_class=tokenizer, **_trainer_kwargs)
+except TypeError:
+    trainer = Seq2SeqTrainer(tokenizer=tokenizer, **_trainer_kwargs)</code></pre>
+
+    <div class="info-box tip">
+      <span class="icon">🔧</span>
+      <div><b>النتيجة:</b> الكود يعمل على Colab بغض النظر عن إصدار <code>transformers</code> المثبَّت افتراضياً.</div>
+    </div>
+
+    <h3>🔄 استئناف تلقائي من آخر Checkpoint</h3>
+    <pre><code>if AUTO_RESUME and os.path.exists(RUN_ROOT):
+    ckpts = sorted(
+        [d for d in os.listdir(RUN_ROOT)
+         if d.startswith("checkpoint-")],
+        key=lambda x: int(x.split("-")[1]),
+    )
+    if ckpts:
+        resume_ckpt = os.path.join(RUN_ROOT, ckpts[-1])</code></pre>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: METRICS -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">12</span> مقاييس التقييم</h2>
+  </div>
+  <div class="slide-body">
+    <h3>📏 ثلاثة مقاييس رئيسية</h3>
+    <div class="grid-3">
+      <div class="card blue">
+        <h4>Main Accuracy</h4>
+        <p>نسبة التطابق في الفئة <b>الرئيسية</b> فقط.</p>
+      </div>
+      <div class="card cyan">
+        <h4>Sub Accuracy</h4>
+        <p>نسبة التطابق في الفئة <b>الفرعية</b> فقط.</p>
+      </div>
+      <div class="card green">
+        <h4>Exact Match</h4>
+        <p>تطابق <b>الفئتين معاً</b> — الأكثر صرامة.</p>
+      </div>
+    </div>
+
+    <h3>🔍 استخراج الفئات من النص المُولَّد</h3>
+    <pre><code>_MAIN_RE = re.compile(r"&lt;main_class&gt;\s*(.*?)\s*&lt;sub_class&gt;", re.DOTALL)
+_SUB_RE  = re.compile(r"&lt;sub_class&gt;\s*(.*?)(?:&lt;/s&gt;|$)",  re.DOTALL)
+
+def parse_label_tokens(text):
+    text = text.replace("&lt;pad&gt;", "").strip()
+    m = _MAIN_RE.search(text)
+    s = _SUB_RE.search(text)
+    return (m.group(1).strip() if m else "",
+            s.group(1).strip() if s else "")</code></pre>
+
+    <div class="info-box info">
+      <span class="icon">🎯</span>
+      <div>استخدام Regex يجعل الاستخراج <b>مقاوماً للأخطاء البسيطة</b> في توليد النموذج (مسافات زائدة، ترتيب مختلف للرموز).</div>
+    </div>
+
+    <h3>📊 التقرير التفصيلي</h3>
+    <p>استخدام <code>classification_report</code> من sklearn لعرض <b>Precision / Recall / F1</b> لكل فئة، مع <code>confusion_matrix</code> لتحليل الالتباس بين الفئات.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: SMOKE TEST -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">13</span> اختبار الدخان (Smoke Test)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🔬 قبل التدريب الفعلي</h3>
+    <p>خطوة ذكية تُوفّر ساعات من الانتظار: تمريرة أمامية واحدة على دفعة صغيرة للتأكد من صحة كل شيء.</p>
+
+    <pre><code>print("\n🔬 اختبار forward pass...")
+_smoke_batch = data_collator([
+    tokenized_corpus["train"][0],
+    tokenized_corpus["train"][1],
+])
+
+with torch.no_grad():
+    _smoke_out = model(
+        input_ids=_smoke_batch["input_ids"].to(device),
+        attention_mask=_smoke_batch["attention_mask"].to(device),
+        labels=_smoke_batch["labels"].to(device),
+    )
+
+print(f"✅ Forward OK — initial loss = {_smoke_out.loss.item():.4f}")
+del _smoke_batch, _smoke_out
+torch.cuda.empty_cache()</code></pre>
+
+    <h3>✅ ما الذي يكشفه هذا الاختبار؟</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <h4>يكشف</h4>
+        <ul>
+          <li>عدم توافق أحجام الموترات</li>
+          <li>نسيان <code>resize_token_embeddings</code></li>
+          <li>مشاكل في DataCollator</li>
+          <li>نفاد الذاكرة (OOM) قبل بدء التدريب</li>
+          <li>أخطاء في الرموز الخاصة</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>الفائدة</h4>
+        <ul>
+          <li>⏱️ توفير ساعات</li>
+          <li>💰 تقليل استهلاك وحدات GPU في Colab</li>
+          <li>🐛 كشف مبكر للأخطاء</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: INFERENCE -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">14</span> الاستنتاج (Inference)</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🚀 دالتان للتنبؤ</h3>
+
+    <div class="split">
+      <div>
+        <h4 style="color:var(--primary);">1) مقال واحد</h4>
+        <pre><code>def predict_article(title, content, num_beams=4):
+    prompt = (
+        "المهمة: تصنيف هرمي\n\n"
+        f"العنوان:\n{title}\n\n"
+        f"النص:\n{content}"
+    )
+    enc = tokenizer(
+        prompt,
+        max_length=SRC_MAX_LEN,
+        truncation=True,
+        return_tensors="pt"
+    ).to(model.device)
+
+    with torch.no_grad():
+        out = model.generate(
+            **enc,
+            max_length=TGT_MAX_LEN,
+            num_beams=num_beams,
+            early_stopping=True
+        )
+
+    raw = tokenizer.decode(out[0], skip_special_tokens=False)
+    m, s = parse_label_tokens(raw)
+    return {"main": m, "sub": s, "raw": raw}</code></pre>
+      </div>
+      <div>
+        <h4 style="color:var(--accent);">2) دفعات</h4>
+        <pre><code>def predict_batch(items, batch_size=8):
+    results = []
+    for i in range(0, len(items), batch_size):
+        chunk = items[i:i + batch_size]
+        prompts = [
+            "المهمة: تصنيف هرمي\n\n"
+            f"العنوان:\n{c['title']}\n\n"
+            f"النص:\n{c['content']}"
+            for c in chunk
+        ]
+        enc = tokenizer(
+            prompts,
+            max_length=SRC_MAX_LEN,
+            truncation=True,
+            padding=True,
+            return_tensors="pt"
+        ).to(model.device)
+
+        with torch.no_grad():
+            out = model.generate(
+                **enc,
+                max_length=TGT_MAX_LEN,
+                num_beams=1
+            )
+
+        for text in tokenizer.batch_decode(
+            out, skip_special_tokens=False
+        ):
+            m, s = parse_label_tokens(text)
+            results.append({"main": m, "sub": s})
+    return results</code></pre>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <span class="icon">⚡</span>
+      <div><b>Beam Search:</b> نستخدم <code>num_beams=4</code> في التنبؤ الفردي (دقة أعلى)، و<code>num_beams=1</code> في الدفعات (سرعة أعلى).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: TECH STACK -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">15</span> التقنيات والحزم المستخدمة</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🛠️ حزم البرمجة</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>🤗 Transformers Ecosystem</h4>
+        <ul>
+          <li><code>transformers</code> — النماذج والـTrainer</li>
+          <li><code>datasets</code> — تحميل ومعالجة البيانات</li>
+          <li><code>evaluate</code> — مقاييس الأداء</li>
+          <li><code>accelerate</code> — تسريع التدريب</li>
+          <li><code>peft</code> — LoRA والمحولات</li>
+          <li><code>sentencepiece</code> — التوكنايز</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>🔬 أدوات علمية</h4>
+        <ul>
+          <li><code>torch</code> — إطار التعلم العميق</li>
+          <li><code>torchao</code> — تحسينات الأداء</li>
+          <li><code>scikit-learn</code> — التقسيم والمقاييس</li>
+          <li><code>numpy</code> / <code>pandas</code> — معالجة البيانات</li>
+          <li><code>matplotlib</code> — الرسوم البيانية</li>
+          <li><code>BeautifulSoup</code> — تنظيف HTML</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>🎯 التقنيات الرئيسية</h3>
+    <div style="margin-top:15px;">
+      <span class="tag">Seq2Seq Learning</span>
+      <span class="tag orange">Transfer Learning</span>
+      <span class="tag cyan">Full Fine-tuning</span>
+      <span class="tag green">LoRA (PEFT)</span>
+      <span class="tag">Gradient Checkpointing</span>
+      <span class="tag orange">Mixed Precision (bf16)</span>
+      <span class="tag cyan">Stratified Splitting</span>
+      <span class="tag green">Custom Special Tokens</span>
+      <span class="tag">Beam Search</span>
+      <span class="tag orange">Early Stopping</span>
+      <span class="tag cyan">Tokenization Caching</span>
+      <span class="tag green">Structured Output Parsing</span>
+      <span class="tag">Hierarchical Classification</span>
+      <span class="tag orange">Auto-Resume Training</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: DISCUSSION POINTS -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">16</span> نقاط للمناقشة</h2>
+  </div>
+  <div class="slide-body">
+    <h3>✅ نقاط القوة</h3>
+    <div class="grid-2">
+      <div class="card green">
+        <h4>معمارياً</h4>
+        <ul>
+          <li>صياغة التصنيف الهرمي كـSeq2Seq = توليد مرن</li>
+          <li>Rموز خاصة هيكلية واضحة</li>
+          <li>دعم 3 استراتيجيات تدريب</li>
+          <li>استخراج منظم للنتائج بـRegex</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h4>هندسياً</h4>
+        <ul>
+          <li>كاش التوكنايز = سرعة إعادة التشغيل</li>
+          <li>Auto-Resume = استمرار بعد انقطاع Colab</li>
+          <li>Forward smoke test = كشف مبكر للأخطاء</li>
+          <li>توافقية مع إصدارات Transformers</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>⚠️ نقاط للنقاش والتحسين</h3>
+    <div class="grid-2">
+      <div class="card orange">
+        <h4>تحديات محتملة</h4>
+        <ul>
+          <li>هل Seq2Seq أفضل من التصنيف التقليدي هنا؟</li>
+          <li>تأثير عدم توازن الفئات الفرعية</li>
+          <li>قيود <code>TGT_MAX_LEN=16</code> على الفئات الطويلة</li>
+          <li>متى نفضّل LoRA على Full Fine-tuning؟</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h4>أفكار تحسين</h4>
+        <ul>
+          <li>تجربة نموذج AraT5-large</li>
+          <li>إضافة Class Weights في دالة الخسارة</li>
+          <li>استخدام Beam Search أوسع + Length Penalty</li>
+          <li>تقييم Faithfulness للمخرجات</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: CONCLUSION -->
+<!-- ============================================================ -->
+<div class="slide">
+  <div class="slide-header">
+    <h2><span class="num">17</span> الخلاصة</h2>
+  </div>
+  <div class="slide-body">
+    <h3>🎯 ما تم إنجازه</h3>
+    <ul>
+      <li>✅ بناء <b>خط أنابيب كامل</b> من البيانات الخام إلى نموذج جاهز للنشر</li>
+      <li>✅ تطبيق <b>تنظيف متعدد المراحل</b> للنصوص العربية</li>
+      <li>✅ تصميم <b>صياغة Seq2Seq مبتكرة</b> للتصنيف الهرمي</li>
+      <li>✅ ضبط دقيق لـ<b>AraT5-base</b> بثلاث استراتيجيات مختلفة</li>
+      <li>✅ بناء <b>نظام تقييم شامل</b> بمقاييس هرمية متعددة</li>
+      <li>✅ تطوير <b>أدوات استنتاج</b> فردية وجماعية</li>
+    </ul>
+
+    <h3>🎓 القيمة العلمية والعملية</h3>
+    <div class="grid-2">
+      <div class="card blue">
+        <h4>علمياً</h4>
+        <p>إثبات فاعلية Seq2Seq في مهام التصنيف الهرمي، ومقارنة استراتيجيات الضبط الدقيق على العربية.</p>
+      </div>
+      <div class="card orange">
+        <h4>عملياً</h4>
+        <p>نظام جاهز للنشر يمكن استخدامه لتصنيف محتوى المواقع الإخبارية أو المكتبات الرقمية العربية.</p>
+      </div>
+    </div>
+
+    <div class="info-box tip" style="margin-top:30px;">
+      <span class="icon">🌟</span>
+      <div><b>الرسالة الرئيسية:</b> استخدام النماذج اللغوية العربية الكبيرة (AraT5) مع صياغات مبتكرة (Seq2Seq للتصنيف) يمكن أن يتجاوز أداء الطرق التقليدية، خاصة في المهام الهرمية.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: THANK YOU -->
+<!-- ============================================================ -->
+<div class="slide title-slide">
+  <div class="content">
+    <div class="badge">🎓 نهاية العرض</div>
+    <h1>شكراً لحسن استماعكم</h1>
+    <h2>أسئلتكم واستفساراتكم محل ترحيب</h2>
+    <div class="meta">
+      <div>📧 للتواصل والاستفسار</div>
+      <div>🔗 المشروع على GitHub</div>
+      <div>📊 النتائج الكاملة في التقرير</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+</html>
